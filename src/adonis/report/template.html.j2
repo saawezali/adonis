@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Adonis flags report</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.3rem; }
+  .meta { color: #666; font-size: .85rem; margin-bottom: 1.5rem; }
+  .flag { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .flag .label { font-weight: 600; font-size: .95rem; }
+  .lbl-genuine_contradiction { color: #b00020; }
+  .lbl-superseded_by_time { color: #b26a00; }
+  .lbl-different_scope { color: #00609c; }
+  .lbl-ambiguous { color: #666; }
+  .conf { float: right; color: #444; }
+  .side { margin-top: .5rem; }
+  .side .doc { font-size: .8rem; color: #555; margin-bottom: .2rem; }
+  .side .goal { color: #444; }
+  .side .span { background: #fdf6e3; border-left: 3px solid #f2c94c; padding: .25rem .5rem; font-size: .85rem; }
+  .side .span a { color: inherit; }
+  .verify { color: #777; font-size: .78rem; margin-top: .4rem; }
+  .reason { color: #666; font-size: .85rem; margin-top: .4rem; font-style: italic; }
+  .badge { font-size: .7rem; padding: .1rem .4rem; border-radius: 4px; background: #eee; }
+  details { margin-top: .4rem; }
+  summary { cursor: pointer; color: #555; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Adonis — contradictions found</h1>
+<p class="meta">
+  {{ flags|length }} flags &middot; generated {{ generated_at }} &middot;
+  judge {{ judge_model }} &middot; prompt {{ judge_prompt_version }}
+  &middot; citation faithfulness {{ "%.0f%%"|format(faithfulness * 100) if faithfulness is not none else "n/a" }}
+</p>
+{% for f in flags %}
+<div class="flag">
+  <div class="conf">confidence {{ "%.2f"|format(f.final_confidence) }}</div>
+  <div class="label lbl-{{ f.final_label }}">{{ f.final_label }}</div>
+  <div class="side">
+    <div class="doc">
+      <a href="{{ f.doc_a_path | default("#", true) }}">{{ f.doc_a_title }}</a>
+      <span class="badge">span a: verbatim {{ "✓" if f.span_a_verbatim else "✗" }} &middot; fuzzy {{ "%.0f"|format(f.span_a_fuzzy) }} &middot; entail {{ "%.2f"|format(f.span_a_entailment) }}</span>
+    </div>
+    <div class="goal">&ldquo;{{ f.text_a }}&rdquo;</div>
+    <div class="span"><a href="{{ f.doc_a_path | default("#", true) }}">&ldquo;&hellip;{{ f.span_a }}&hellip;&rdquo;</a></div>
+  </div>
+  <div class="side">
+    <div class="doc">
+      <a href="{{ f.doc_b_path | default("#", true) }}">{{ f.doc_b_title }}</a>
+      <span class="badge">span b: verbatim {{ "✓" if f.span_b_verbatim else "✗" }} &middot; fuzzy {{ "%.0f"|format(f.span_b_fuzzy) }} &middot; entail {{ "%.2f"|format(f.span_b_entailment) }}</span>
+    </div>
+    <div class="goal">&ldquo;{{ f.text_b }}&rdquo;</div>
+    <div class="span"><a href="{{ f.doc_b_path | default("#", true) }}">&ldquo;&hellip;{{ f.span_b }}&hellip;&rdquo;</a></div>
+  </div>
+  <div class="verify">judge={{ f.judge_model }} &middot; prompt={{ f.judge_prompt_version }}</div>
+  {% if f.reasoning %}
+  <details><summary>judge reasoning</summary><div class="reason">{{ f.reasoning }}</div></details>
+  {% endif %}
+</div>
+{% else %}
+<p>No flags yet. Run <code>python scripts/run_pipeline.py</code> first.</p>
+{% endfor %}
+</body>
+</html>

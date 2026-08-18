@@ -1,0 +1,65 @@
+{
+  "categories": {
+    "ambiguous": {
+      "f1": null,
+      "fn": 0,
+      "fp": 0,
+      "precision": null,
+      "recall": null,
+      "tp": 0
+    },
+    "different_scope": {
+      "f1": null,
+      "fn": 0,
+      "fp": 0,
+      "precision": null,
+      "recall": null,
+      "tp": 0
+    },
+    "genuine_contradiction": {
+      "f1": 0.3636363636363636,
+      "fn": 0,
+      "fp": 7,
+      "precision": 0.2222222222222222,
+      "recall": 1.0,
+      "tp": 2
+    },
+    "superseded_by_time": {
+      "f1": null,
+      "fn": 0,
+      "fp": 0,
+      "precision": null,
+      "recall": null,
+      "tp": 0
+    },
+    "true_negative_near_dup": {
+      "f1": null,
+      "fn": 1,
+      "fp": 0,
+      "precision": null,
+      "recall": 0.0,
+      "tp": 0
+    },
+    "true_negative_unrelated": {
+      "f1": 0.25,
+      "fn": 6,
+      "fp": 0,
+      "precision": 1.0,
+      "recall": 0.14285714285714285,
+      "tp": 1
+    }
+  },
+  "citation_faithfulness": 1.0,
+  "detection_precision": 0.2222222222222222,
+  "detection_recall": 1.0,
+  "generated_at": "2026-08-18T15:21:54.872661+00:00",
+  "macro_f1": 0.30681818181818177,
+  "micro": {
+    "f1": 0.3,
+    "precision": 0.3,
+    "recall": 0.3
+  },
+  "n_judged": 9,
+  "n_labeled": 10,
+  "n_verified": 9
+}
