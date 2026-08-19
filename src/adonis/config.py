@@ -1,7 +1,9 @@
 """Typed application configuration, loaded from environment / .env.
 
-Per PLAN.md section 2: provider-independent. Concrete adapter is selected by
-`ADONIS_LLM_PROVIDER`; two tiers (extractor, judge) are configured independently.
+Per PLAN.md section 2: provider-independent. Concrete adapter is selected per
+tier: a provider-specific override (ADONIS_EXTRACTOR_PROVIDER /
+ADONIS_JUDGE_PROVIDER) wins, otherwise ADONIS_LLM_PROVIDER is used. Tiers are
+configured independently (extractor: cheap/fast; judge: larger/smarter).
 """
 
 from __future__ import annotations
@@ -10,6 +12,20 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+Provider = Literal["anthropic", "openai", "custom"]
+ALL_PROVIDERS: tuple[Literal["anthropic", "openai", "custom"], ...] = (
+    "anthropic",
+    "openai",
+    "custom",
+)
+
+#: Built-in defaults per provider for the web UI (edit via settings page).
+PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
+    "anthropic": {"base_url": "", "extractor_model": "claude-3-5-haiku-latest", "judge_model": "claude-3-5-sonnet-latest"},
+    "openai": {"base_url": "https://api.openai.com/v1", "extractor_model": "gpt-4o-mini", "judge_model": "gpt-4o"},
+    "custom": {"base_url": "http://localhost:11434/v1", "extractor_model": "llama3.1", "judge_model": "llama3.1"},
+}
 
 
 class Settings(BaseSettings):
@@ -23,7 +39,10 @@ class Settings(BaseSettings):
     )
 
     # LLM
-    llm_provider: Literal["anthropic", "openai"] = "anthropic"
+    llm_provider: Provider = "anthropic"
+    # Tier overrides (None = fall back to llm_provider for that tier).
+    extractor_provider: Provider | None = None
+    judge_provider: Provider | None = None
     llm_api_key: str = ""
     llm_base_url: str | None = None
     extractor_model: str = "claude-3-5-haiku-latest"
@@ -89,3 +108,69 @@ def get_settings() -> Settings:
     if _settings is None:
         _settings = Settings()
     return _settings
+
+
+def reload_settings() -> Settings:
+    """Re-read .env / environment and rebuild the cached settings."""
+    global _settings
+    _settings = Settings()
+    return _settings
+
+
+def provider_for_tier(settings: Settings, tier: str) -> Provider:
+    """Effective provider for a tier: override wins, else the global one."""
+    if tier == "extractor":
+        return settings.extractor_provider or settings.llm_provider
+    if tier == "judge":
+        return settings.judge_provider or settings.llm_provider
+    raise ValueError(f"unknown tier: {tier!r}; expected 'extractor' or 'judge'")
+
+
+def save_settings(patch: dict[str, str]) -> Path:
+    """Merge ADONIS_* values into .env and return its path.
+
+    Existing KEY=value lines are updated in place (comments preserved);
+    new keys are appended. Missing values (empty string) are ignored so the
+    UI can leave fields blank to keep the current value.
+    """
+    env_path = Path(".env")
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    written: set[str] = set()
+
+    def _update(line: str) -> str | None:
+        if "=" not in line:
+            return None
+        key = line.split("=", 1)[0].strip()
+        if patch.get(key):
+            value = patch[key]
+            written.add(key)
+            return f"{key}={value}"
+        return None
+
+    out: list[str] = []
+    for line in lines:
+        updated = _update(line)
+        if updated is not None:
+            out.append(updated)
+        else:
+            out.append(line)
+    for key, value in patch.items():
+        if value and key not in written and not any(
+            l.split("=", 1)[0].strip() == key for l in out
+        ):
+            out.append(f"{key}={value}")
+    env_path.write_text("\n".join(out) + ("\n" if out else ""), encoding="utf-8")
+    try:
+        env_path.chmod(0o600)
+    except OSError:
+        pass
+    return env_path
+
+
+def mask_secret(secret: str) -> str:
+    """Display-safe mask: keep last 4 chars, blank if empty."""
+    if not secret:
+        return ""
+    if len(secret) <= 4:
+        return "*" * len(secret)
+    return "…" * 6 + secret[-4:]

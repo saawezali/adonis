@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adonis console</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 880px; color: #222; }
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1.05rem; margin-top: 1.6rem; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin: .8rem 0; }
+  label { display: block; margin: .6rem 0 .2rem; font-size: .85rem; color: #555; }
+  input, select { width: 100%; padding: .45rem .6rem; border: 1px solid #bbb; border-radius: 6px; font-size: .9rem; }
+  button { margin-top: .9rem; padding: .5rem 1rem; border: 1px solid #999; border-radius: 6px;
+           background: #fff; cursor: pointer; font-size: .9rem; }
+  button:hover { background: #f2f2f2; }
+  button.primary { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+  button.primary:hover { background: #16304e; }
+  .row { display: flex; gap: 1rem; }
+  .row > div { flex: 1; }
+  .hint { font-size: .78rem; color: #888; margin-top: .2rem; }
+  .ok { color: #1a7f37; }
+  .err { color: #b00020; }
+  pre { background: #f6f8fa; padding: .8rem; border-radius: 6px; font-size: .8rem; overflow-x: auto; }
+  .keys { margin-top: 1.6rem; font-size: .8rem; }
+  #spinner { display: none; }
+  .meta { color: #666; font-size: .85rem; }
+</style>
+</head>
+<body>
+<h1>Adonis console</h1>
+<p class="meta" id="status-meta">loading…</p>
+
+<div class="card">
+  <h2>LLM provider</h2>
+  <label for="provider">Provider</label>
+  <select id="provider"></select>
+  <p class="hint" id="provider-hint"></p>
+
+  <div class="row">
+    <div>
+      <label for="extractor_provider">Extractor tier (claims)</label>
+      <select id="extractor_provider"></select>
+    </div>
+    <div>
+      <label for="judge_provider">Judge tier (pairs)</label>
+      <select id="judge_provider"></select>
+    </div>
+  </div>
+
+  <label for="api_key">API key</label>
+  <input type="password" id="api_key" autocomplete="off" placeholder="">
+  <p class="hint">Leave blank to keep the current key. Keys are stored in <code>.env</code> (permissions 600).</p>
+
+  <label for="base_url">Base URL (custom inference / proxy)</label>
+  <input type="text" id="base_url" placeholder="e.g. http://localhost:11434/v1 (Ollama)">
+  <p class="hint" id="base-url-hint">For "custom" point this at an OpenAI-compatible endpoint: Ollama (<code>localhost:11434/v1</code>), vLLM, LM Studio, Together, Groq…</p>
+
+  <div class="row">
+    <div>
+      <label for="extractor_model">Extractor model</label>
+      <input type="text" id="extractor_model">
+    </div>
+    <div>
+      <label for="judge_model">Judge model</label>
+      <input type="text" id="judge_model">
+    </div>
+  </div>
+
+  <button class="primary" id="save">Save settings</button>
+  <button id="test">Test connection</button>
+  <button id="reset-defaults">Reset to provider defaults</button>
+  <span id="spinner">working…</span>
+  <pre id="result" style="display:none"></pre>
+</div>
+
+<div class="card">
+  <h2>Run pipeline</h2>
+  <p class="hint">Claims → candidates → judge → verify → flags, then the HTML report is rebuilt.</p>
+  <button id="run-demo" class="primary">Run (offline demo)</button>
+  <button id="run-llm">Run (--llm, real judge)</button>
+  <input type="checkbox" id="refresh"><label for="refresh" style="display:inline; margin-left:.3rem">refresh (wipe previous candidates/judgments)</label>
+  <pre id="pipeline-out" style="display:none"></pre>
+</div>
+
+<div class="card">
+  <h2>Outputs</h2>
+  <p><a href="/report" target="_blank">HTML report</a> &nbsp;·&nbsp;
+     <a href="/reports/eval.json" target="_blank">eval metrics (json)</a></p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const state = { defaults: {} };
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.detail || (body.message || res.statusText));
+  return body;
+}
+
+function providerOptions(selected) {
+  return state.providers.map(p =>
+    `<option value="${p}" ${p === selected ? "selected" : ""}>${p}</option>`).join("");
+}
+
+function tierOptions(selected) {
+  const opts = [`<option value="">use global (llm_provider)</option>`];
+  opts.push(...state.providers.map(p =>
+    `<option value="${p}" ${p === selected ? "selected" : ""}>${p}</option>`));
+  return opts.join("");
+}
+
+function applyDefaults(provider) {
+  const d = state.defaults[provider] || {};
+  $("base_url").value = d.base_url || "";
+  $("extractor_model").value = d.extractor_model || "";
+  $("judge_model").value = d.judge_model || "";
+}
+
+async function loadSettings() {
+  const s = await api("/api/settings");
+  state.providers = s.providers;
+  state.defaults = s.defaults;
+  $("provider").innerHTML = providerOptions(s.llm_provider);
+  $("extractor_provider").innerHTML = tierOptions(s.extractor_provider || "");
+  $("judge_provider").innerHTML = tierOptions(s.judge_provider || "");
+  $("api_key").placeholder = s.key_set ? `•••••• ${s.llm_api_key} (blank = unchanged)` : "(not set)";
+  $("base_url").value = s.llm_base_url || "";
+  $("extractor_model").value = s.extractor_model;
+  $("judge_model").value = s.judge_model;
+  updateHints();
+  const st = await api("/api/status");
+  $("status-meta").textContent =
+    `${st.documents} docs · ${st.claims} claims · ${st.candidate_pairs} candidates · ` +
+    `${st.flags} flags · ${st.eval_labels} labeled pairs · ` +
+    `judge provider: ${st.judge_effective}`;
+}
+
+function updateHints() {
+  const p = $("provider").value;
+  const hints = {
+    anthropic: "Anthropic Messages API (no base URL needed).",
+    openai: "OpenAI Chat Completions API.",
+    custom: "Any OpenAI-compatible server — Ollama, vLLM, LM Studio, Together, Groq.",
+  };
+  $("provider-hint").textContent = `provider ${p} — ${hints[p] || ""}`;
+  $("base_url").disabled = p === "anthropic";
+}
+
+function collect() {
+  return {
+    llm_provider: $("provider").value,
+    extractor_provider: $("extractor_provider").value,
+    judge_provider: $("judge_provider").value,
+    llm_api_key: $("api_key").value.trim(),
+    llm_base_url: $("base_url").value.trim(),
+    extractor_model: $("extractor_model").value.trim(),
+    judge_model: $("judge_model").value.trim(),
+  };
+}
+
+function show(pre, obj) {
+  pre.style.display = "block";
+  pre.textContent = JSON.stringify(obj, null, 2);
+}
+
+async function wrap(fn, pre) {
+  $("spinner").style.display = "inline";
+  try {
+    const out = await fn();
+    pre.className = "ok";
+    show(pre, out);
+  } catch (e) {
+    pre.className = "err";
+    show(pre, { error: String(e.message || e) });
+  } finally {
+    $("spinner").style.display = "none";
+  }
+}
+
+$("provider").addEventListener("change", updateHints);
+
+$("reset-defaults").addEventListener("click", () => applyDefaults($("provider").value));
+
+$("save").addEventListener("click", () =>
+  wrap(async () => api("/api/settings", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(collect()),
+  }).then(loadSettings), $("result")));
+
+$("test").addEventListener("click", () =>
+  wrap(async () => api("/api/test", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(collect()),
+  }), $("result")));
+
+const runClick = (use_llm) => () =>
+  wrap(async () => api("/api/pipeline/run", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({use_llm, refresh: $("refresh").checked}),
+  }), $("pipeline-out"));
+
+$("run-demo").addEventListener("click", runClick(false));
+$("run-llm").addEventListener("click", runClick(true));
+
+loadSettings().catch((e) => {
+  $("status-meta").textContent = "failed to load settings: " + e.message;
+});
+</script>
+</body>
+</html>

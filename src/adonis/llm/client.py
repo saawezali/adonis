@@ -2,8 +2,16 @@
 
 Per PLAN.md: provider-independent. Two tiers are configured independently
 (extractor: cheap/fast; judge: larger/smarter). Concrete adapters implement
-LLMClient; the choice is made by Settings.llm_provider and loaded dynamically
-by get_client().
+LLMClient; the choice is per tier (ADONIS_EXTRACTOR_PROVIDER /
+ADONIS_JUDGE_PROVIDER, falling back to ADONIS_LLM_PROVIDER) and loaded
+dynamically by get_client().
+
+Providers:
+  anthropic  Anthropic Messages API (api.anthropic.com)
+  openai     OpenAI Chat Completions API (api.openai.com)
+  custom     Any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio, ...)
+             via ADONIS_LLM_BASE_URL; the API key may be empty for local
+             inference.
 """
 
 from __future__ import annotations
@@ -13,9 +21,12 @@ import re
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
-from adonis.config import get_settings
+from adonis.config import ALL_PROVIDERS, get_settings, provider_for_tier
 
 _TIERS = ("extractor", "judge")
+
+#: Providers whose adapter module is OpenAI Chat Completions-shaped.
+_OPENAI_COMPATIBLE = ("openai", "custom")
 
 
 @runtime_checkable
@@ -52,19 +63,30 @@ class LLMClient(Protocol):
 def get_client(tier: str) -> LLMClient:
     """Build a client for the given tier ('extractor' | 'judge').
 
-    The provider module is found via Settings.llm_provider; each adapter must
-    implement `build_client(tier: str) -> LLMClient`.
+    The provider for the tier (override, else global) selects the adapter
+    module; each adapter must implement `build_client(tier: str) -> LLMClient`.
     """
     if tier not in _TIERS:
         raise ValueError(f"unknown tier: {tier!r}; expected one of {_TIERS}")
     import importlib
 
     settings = get_settings()
-    if settings.llm_api_key == "":
+    provider = provider_for_tier(settings, tier)
+    if provider not in ALL_PROVIDERS:
+        raise ValueError(
+            f"unknown provider {provider!r}; expected one of {ALL_PROVIDERS}"
+        )
+    if settings.llm_api_key == "" and provider != "custom":
         raise RuntimeError(
             "ADONIS_LLM_API_KEY not set. Copy .env.example to .env and fill it in."
         )
-    module = importlib.import_module(f"adonis.llm.{settings.llm_provider}")
+    if provider == "custom" and not settings.llm_base_url:
+        raise RuntimeError(
+            "ADONIS_LLM_BASE_URL is required for provider 'custom'. "
+            "Point it at an OpenAI-compatible endpoint (Ollama, vLLM, LM Studio)."
+        )
+    module_name = "openai" if provider in _OPENAI_COMPATIBLE else provider
+    module = importlib.import_module(f"adonis.llm.{module_name}")
     build: Callable[[str], LLMClient] = module.build_client
     return build(tier)
 

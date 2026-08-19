@@ -30,6 +30,16 @@ class DemoJudge(LLMClient):
 
     model = "demo-judge"
 
+    def complete(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int = 1024,
+        temperature: float = 0.0,
+    ) -> str:
+        return json.dumps(self.complete_json(system, user))
+
     def complete_json(
         self,
         system: str,

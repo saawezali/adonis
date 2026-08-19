@@ -1,4 +1,4 @@
-.PHONY: install ingest pipeline report eval test lint typecheck clean
+.PHONY: install ingest pipeline report eval serve test lint typecheck clean
 
 install:
 	pip install -e ".[dev]"
@@ -15,6 +15,9 @@ report:
 
 eval:
 	python scripts/eval_report.py
+
+serve:
+	python -m adonis.web
 
 test:
 	pytest

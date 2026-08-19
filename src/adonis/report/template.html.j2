@@ -30,7 +30,7 @@
 <h1>Adonis — contradictions found</h1>
 <p class="meta">
   {{ flags|length }} flags &middot; generated {{ generated_at }} &middot;
-  judge {{ judge_model }} &middot; prompt {{ judge_prompt_version }}
+  judge {{ judge_model }} (provider {{ judge_provider }}) &middot; prompt {{ judge_prompt_version }}
   &middot; citation faithfulness {{ "%.0f%%"|format(faithfulness * 100) if faithfulness is not none else "n/a" }}
 </p>
 {% for f in flags %}

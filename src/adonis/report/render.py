@@ -15,7 +15,7 @@ from urllib.request import pathname2url
 
 from jinja2 import Environment, FileSystemLoader
 
-from adonis.config import get_settings
+from adonis.config import get_settings, provider_for_tier
 from adonis.db import get_conn, load_flags_with_context, load_judged_pairs_with_verification
 
 _TEMPLATES_DIR = Path(__file__).parent
@@ -74,6 +74,7 @@ def render_report(conn: sqlite3.Connection, out_path: Path) -> Path:
         flags=flags,
         generated_at=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         judge_model=flags[0]["judge_model"] if flags else "n/a",
+        judge_provider=provider_for_tier(get_settings(), "judge"),
         judge_prompt_version=flags[0]["judge_prompt_version"] if flags else "n/a",
         faithfulness=faithfulness,
     )

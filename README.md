@@ -13,10 +13,25 @@ python -m spacy download en_core_web_sm
 
 ## Configure
 
-Copy `.env.example` → `.env` and fill in:
-- `ADONIS_LLM_PROVIDER` — which adapter to use (e.g. `anthropic`, `openai`).
-- `ADONIS_LLM_API_KEY` — key for that provider.
-- `ADONIS_EXTRACTOR_MODEL` / `ADONIS_JUDGE_MODEL` — model names for the two tiers.
+Copy `.env.example` → `.env` and fill in, or run the web console and do it
+from the settings page (recommended):
+
+```bash
+python -m adonis.web          # -> http://127.0.0.1:8000/
+```
+
+The settings page lets you:
+- pick an LLM provider (`anthropic`, `openai`, or `custom` — any
+  OpenAI-compatible endpoint such as Ollama / vLLM / LM Studio),
+- enter the API key (stored in `.env`, permissions 600) and test the
+  connection before saving,
+- set per-tier providers/models (extractor vs judge) and a base URL
+  override, then run the pipeline from the same page.
+
+Manual `.env` knobs: `ADONIS_LLM_PROVIDER`, `ADONIS_LLM_API_KEY`,
+`ADONIS_EXTRACTOR_PROVIDER` / `ADONIS_JUDGE_PROVIDER` (optional tier
+overrides), `ADONIS_EXTRACTOR_MODEL` / `ADONIS_JUDGE_MODEL`, and
+`ADONIS_LLM_BASE_URL` (required for `custom`; e.g. `http://localhost:11434/v1`).
 
 ## Run
 
@@ -64,6 +79,11 @@ and calls any differently-worded pair a contradiction.
 - [x] M2 — Claim + entity extraction (sentence chunking, claims_v1 prompt w/ citation spans + temporal/scope + triviality filter, GLiNER NER over claim spans, entity canonicalization, llm_calls tracing, label CLI)
 - [x] M3 — Candidate pair generation + first end-to-end smoke test (embed + FAISS top-K + entity-overlap candidates, hybrid scoring, judge_v1 prompt with span-level citations, superseded_by_time rule, measure_recall, trick set; 93 tests)
 - [x] M4 — Full pipeline + citation verification + confidence + report (lexical span match verbatim+fuzzy, LLM entailment check, verification_results for every judge output, flags only on verified pairs, numpy logistic-regression confidence calibration, Jinja2 HTML report with file:// source links)
-- [x] M5 — Eval harness (per-category P/R/F1 with flag-avoidance semantics for true negatives, micro/macro, detection recall/precision, citation faithfulness; label pools entity/near_dup/unrelated; reports/eval.json artifact; 134 tests)
+- [x] M5 — Eval harness (per-category P/R/F1 with flag-avoidance semantics for true negatives, micro/macro, detection recall/precision, citation faithfulness; label pools entity/near_dup/unrelated; reports/eval.json artifact; 155 tests)
+
+Beyond the PLAN: web console (`python -m adonis.web`) — provider setup + API key
+entry + custom OpenAI-compatible inference provider (Ollama/vLLM/LM Studio),
+per-tier provider/model overrides, connection test, pipeline run, and report
+access from the browser (FastAPI, no React).
 
 See `PLAN.md` for what's demoable at each milestone.

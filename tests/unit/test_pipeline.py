@@ -59,7 +59,9 @@ def test_pipeline_end_to_end(tmp_env):
     _seed(tmp_env)
     conn = get_conn()
     try:
-        from scripts.run_pipeline import DemoJudge, DemoVerifier, run
+        from adonis.judge.demo import DemoJudge
+        from adonis.pipeline import run
+        from adonis.verify.demo import DemoVerifier
 
         embedder = FakeEmbedder(
             dim=4,
@@ -70,11 +72,11 @@ def test_pipeline_end_to_end(tmp_env):
                 "The budget is 800 euros.": [0, 0.95, 0.05, 0],
             },
         )
-        stats = run(  # type: ignore[arg-type]
+        stats = run(
             conn,
-            client=DemoJudge(),  # type: ignore[arg-type]
+            client=DemoJudge(),
             embedder=embedder,
-            verifier=DemoVerifier(),  # type: ignore[arg-type]
+            verifier=DemoVerifier(),
         )
 
         assert stats.claims == 5
@@ -131,13 +133,15 @@ def test_pipeline_no_claims_is_a_noop(tmp_env):
     apply_migrations()
     conn = get_conn()
     try:
-        from scripts.run_pipeline import DemoJudge, DemoVerifier, run
+        from adonis.judge.demo import DemoJudge
+        from adonis.pipeline import run
+        from adonis.verify.demo import DemoVerifier
 
-        stats = run(  # type: ignore[arg-type]
+        stats = run(
             conn,
-            client=DemoJudge(),  # type: ignore[arg-type]
+            client=DemoJudge(),
             embedder=FakeEmbedder(),
-            verifier=DemoVerifier(),  # type: ignore[arg-type]
+            verifier=DemoVerifier(),
         )
         assert stats.claims == 0
         assert stats.candidates == 0
@@ -152,9 +156,11 @@ def test_pipeline_rerun_does_not_duplicate_candidates(tmp_env):
     _seed(tmp_env)
     conn = get_conn()
     try:
-        from scripts.run_pipeline import DemoJudge, DemoVerifier, run
+        from adonis.judge.demo import DemoJudge
+        from adonis.pipeline import run
+        from adonis.verify.demo import DemoVerifier
 
-        kwargs = {  # type: ignore[arg-type]
+        kwargs = {
             "client": DemoJudge(),
             "embedder": FakeEmbedder(dim=4),
             "verifier": DemoVerifier(),
