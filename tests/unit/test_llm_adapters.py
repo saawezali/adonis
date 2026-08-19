@@ -92,6 +92,114 @@ def test_openai_complete_json_uses_json_mode():
     assert seen["rf"] == {"type": "json_object"}
 
 
+def test_openai_explicitly_disables_streaming():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = httpx._models.jsonlib.loads(request.content)
+        seen["stream"] = body.get("stream")
+        return httpx.Response(200, json={"choices": [{"message": {"content": "hi"}}]})
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    assert client.complete("sys", "usr") == "hi"
+    assert seen["stream"] is False
+
+
+def test_openai_handles_sse_streaming_response():
+    def handler(request: httpx.Request) -> httpx.Response:
+        chunks = (
+            'data: {"id":"chatcmpl-1","object":"chat.completion.chunk","choices":'
+            '[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}\n\n'
+            'data: {"id":"chatcmpl-1","object":"chat.completion.chunk","choices":'
+            '[{"index":0,"delta":{"content":"hel"},"finish_reason":null}]}\n\n'
+            'data: {"id":"chatcmpl-1","object":"chat.completion.chunk","choices":'
+            '[{"index":0,"delta":{"content":"lo ok"},"finish_reason":null}]}\n\n'
+            'data: [DONE]\n\n'
+        )
+        return httpx.Response(200, content=chunks.encode(), headers={"content-type": "text/event-stream"})
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    assert client.complete("sys", "usr") == "hello ok"
+
+
+def test_openai_sse_detected_by_data_prefix():
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = (
+            'data: {"choices":[{"delta":{"content":"ping"}}]}\n\n'
+            'data: [DONE]\n\n'
+        )
+        return httpx.Response(200, content=payload.encode())  # no content-type header
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    assert client.complete("sys", "usr") == "ping"
+
+
+def test_openai_sse_empty_stream_returns_empty():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text='data: [DONE]\n\n')
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    assert client.complete("sys", "usr") == ""
+
+
+def test_openai_non_json_body_raises_with_context():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>gateway hiccup</html>")
+
+    client = _with_mock(openai.OpenAIClient(model="custom-7b", api_key="k"), handler)
+    with pytest.raises(RuntimeError, match="non-JSON") as exc_info:
+        client.complete("sys", "usr")
+    assert "custom-7b" in str(exc_info.value)
+    assert "<html>gateway hiccup</html>" in str(exc_info.value)
+
+
+def test_openai_empty_200_body_raises_with_context():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="")
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    with pytest.raises(RuntimeError, match="non-JSON .*<empty body>"):
+        client.complete("sys", "usr")
+
+
+def test_openai_missing_choices_raises_context():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"error": {"message": "model overloaded"}})
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    with pytest.raises(RuntimeError, match="unexpected payload.*model overloaded"):
+        client.complete("sys", "usr")
+
+
+def test_openai_json_mode_rejected_retries_without_it():
+    seen = {"calls": 0, "rf": []}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["calls"] += 1
+        body = httpx._models.jsonlib.loads(request.content)
+        seen["rf"].append(body.get("response_format"))
+        if seen["calls"] == 1:  # first attempt: gateway rejects response_format
+            return httpx.Response(
+                400,
+                json={"error": {"message": "response_format json_object unsupported"}},
+            )
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"ok": 1}'}}]})
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    assert client.complete_json("sys", "usr") == {"ok": 1}
+    assert seen["calls"] == 2
+    assert seen["rf"] == [{"type": "json_object"}, None]
+
+
+def test_openai_other_4xx_not_retried():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(429, json={"error": {"message": "rate limited"}})
+
+    client = _with_mock(openai.OpenAIClient(model="m", api_key="k"), handler)
+    with pytest.raises(httpx.HTTPStatusError):
+        client.complete_json("sys", "usr")
+
+
 # --- shared json parsing ----------------------------------------------------
 
 

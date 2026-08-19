@@ -15,6 +15,7 @@ def isolated_db(tmp_path, monkeypatch):
     """Point Adonis at a temp SQLite file and apply migrations."""
     from adonis import config as cfg
 
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("ADONIS_DB_PATH", str(tmp_path / "test.sqlite"))
     monkeypatch.setenv("ADONIS_CORPUS_DIR", str(tmp_path / "corpus"))
     monkeypatch.setenv("ADONIS_REPORTS_DIR", str(tmp_path / "reports"))
@@ -71,6 +72,7 @@ def test_llm_client_factory_requires_key(tmp_path, monkeypatch):
     """Without a key the factory must refuse rather than silently fail later."""
     from adonis import config as cfg
     cfg._settings = None
+    monkeypatch.chdir(tmp_path)  # never read a real .env from the repo root
     monkeypatch.setenv("ADONIS_LLM_API_KEY", "")
     monkeypatch.setenv("ADONIS_DB_PATH", str(tmp_path / "x.sqlite"))
 

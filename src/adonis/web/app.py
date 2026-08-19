@@ -130,19 +130,21 @@ def _probe(
 
     started = time.monotonic()
     try:
-        response = client.complete_json(
-            "You are a connectivity probe. Reply with JSON only.",
-            'Return exactly: {"ok": true}',
-            max_tokens=8,
+        response = client.complete(
+            "You are a connectivity probe. Answer briefly.",
+            "Say ok if you can read this message.",
+            max_tokens=16,
         )
     except Exception as exc:  # surface any adapter error to the UI
         raise HTTPException(status_code=502, detail=f"{type(exc).__name__}: {exc}") from exc
+    reply = str(response).strip()
     return {
-        "ok": response.get("ok") is True,
+        "ok": bool(reply),
         "latency_ms": int((time.monotonic() - started) * 1000),
         "provider": provider,
         "model": client.model,
         "base_url": url,
+        "reply": reply[:120],
     }
 
 

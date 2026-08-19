@@ -9,7 +9,9 @@ from adonis import config as cfg
 
 @pytest.fixture
 def tmp_env(tmp_path, monkeypatch):
-    """Point all ADONIS_ paths at a scratch dir and reset cached settings."""
+    """Point all ADONIS_ paths at a scratch dir, chdir away from any real
+    .env, and reset cached settings."""
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("ADONIS_DB_PATH", str(tmp_path / "db" / "adonis.sqlite"))
     monkeypatch.setenv("ADONIS_CORPUS_DIR", str(tmp_path / "corpus"))
     monkeypatch.setenv("ADONIS_REPORTS_DIR", str(tmp_path / "reports"))

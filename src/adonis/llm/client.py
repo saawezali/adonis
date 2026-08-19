@@ -130,7 +130,12 @@ def parse_json_response(text: str) -> dict[str, object]:
         elif ch == "}":
             depth -= 1
             if depth == 0:
-                parsed = json.loads(text[start : i + 1])
+                try:
+                    parsed = json.loads(text[start : i + 1])
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        f"malformed JSON object in response: {text[:200]!r}"
+                    ) from exc
                 if isinstance(parsed, dict):
                     return parsed
                 break
