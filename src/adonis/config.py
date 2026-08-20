@@ -98,6 +98,15 @@ class Settings(BaseSettings):
     corpus_dir: Path = Path("data/corpus")
     reports_dir: Path = Path("reports")
 
+    # Google Drive live sync (OAuth)
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str | None = None  # defaults to http://127.0.0.1:8000/api/connections/drive/callback
+    drive_sync_interval_s: int = 300
+
+    # Uploads
+    max_upload_mb: int = 100
+
 
 _settings: Settings | None = None
 

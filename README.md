@@ -81,9 +81,8 @@ and calls any differently-worded pair a contradiction.
 - [x] M4 — Full pipeline + citation verification + confidence + report (lexical span match verbatim+fuzzy, LLM entailment check, verification_results for every judge output, flags only on verified pairs, numpy logistic-regression confidence calibration, Jinja2 HTML report with file:// source links)
 - [x] M5 — Eval harness (per-category P/R/F1 with flag-avoidance semantics for true negatives, micro/macro, detection recall/precision, citation faithfulness; label pools entity/near_dup/unrelated; reports/eval.json artifact; 155 tests)
 
-Beyond the PLAN: web console (`python -m adonis.web`) — provider setup + API key
-entry + custom OpenAI-compatible inference provider (Ollama/vLLM/LM Studio),
-per-tier provider/model overrides, connection test, pipeline run, and report
-access from the browser (FastAPI, no React).
+Beyond the PLAN: full local console (`python -m adonis.web` → http://127.0.0.1:8000/) — Dashboard, Documents (auto-ingest upload, search, viewer, DB-only delete), Connections (local/Notion + Google Drive live sync via OAuth), Pipeline (async jobs with polling, extract controls), Flags (filter/triage + verification badges), Eval (metrics + staged labels pending review), and Settings (provider/API key/base URL + Google OAuth).
+
+Manual `.env` knobs also: `ADONIS_GOOGLE_CLIENT_ID` / `SECRET` / `REDIRECT_URI` + `ADONIS_GOOGLE_REFRESH_TOKEN`.
 
 See `PLAN.md` for what's demoable at each milestone.

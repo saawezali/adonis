@@ -514,3 +514,185 @@ def load_labeled_pairs(conn: sqlite3.Connection) -> list[sqlite3.Row]:
             " WHERE label NOT IN ('true_negative_unrelated', 'true_negative_near_dup')"
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# Console extensions (002) — jobs / connections / staged labels / documents
+# ---------------------------------------------------------------------------
+
+def delete_document(conn: sqlite3.Connection, document_id: str) -> dict[str, int]:
+    """Hard-delete a document row only (per spec: DB row, not original file).
+
+    Cascades through claims → entity_mentions / candidate_pairs → judge →
+    verification → flags → staged/eval labels linked by doc. Uses FK-aware
+    manual deletes (SQLite FKs not cascaded in schema).
+    Returns counts per table deleted.
+    """
+    cur = conn.execute("SELECT id FROM documents WHERE id = ?", (document_id,))
+    if cur.fetchone() is None:
+        return {"documents": 0}
+    # Collect claim ids for this doc.
+    claim_ids = [r["id"] for r in conn.execute("SELECT id FROM claims WHERE document_id = ?", (document_id,))]
+    counts: dict[str, int] = {}
+    if claim_ids:
+        qmarks = ",".join("?" for _ in claim_ids)
+        # Candidate pairs involving those claims -> collect pair ids.
+        pair_rows = conn.execute(
+            f"SELECT id FROM candidate_pairs WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
+            (*claim_ids, *claim_ids),
+        ).fetchall()
+        pair_ids = [r["id"] for r in pair_rows]
+        if pair_ids:
+            pq = ",".join("?" for _ in pair_ids)
+            # Judge outputs for those pairs.
+            jo_rows = conn.execute(f"SELECT id FROM judge_outputs WHERE candidate_pair_id IN ({pq})", tuple(pair_ids)).fetchall()
+            jo_ids = [r["id"] for r in jo_rows]
+            if jo_ids:
+                jq = ",".join("?" for _ in jo_ids)
+                vr = conn.execute(f"DELETE FROM verification_results WHERE judge_output_id IN ({jq})", tuple(jo_ids))
+                counts["verification_results"] = vr.rowcount
+                # flags linked to pairs (not jo) — delete via pair ids
+                fg = conn.execute(f"DELETE FROM flags WHERE candidate_pair_id IN ({pq})", tuple(pair_ids))
+                counts["flags"] = fg.rowcount
+                jo_del = conn.execute(f"DELETE FROM judge_outputs WHERE id IN ({jq})", tuple(jo_ids))
+                counts["judge_outputs"] = jo_del.rowcount
+            else:
+                # still clean flags even without jo
+                fg = conn.execute(f"DELETE FROM flags WHERE candidate_pair_id IN ({pq})", tuple(pair_ids))
+                counts["flags"] = fg.rowcount
+            # staged labels referencing these claims
+            sl = conn.execute(
+                f"DELETE FROM staged_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
+                (*claim_ids, *claim_ids),
+            )
+            counts["staged_labels"] = sl.rowcount
+            # eval labels
+            el = conn.execute(
+                f"DELETE FROM eval_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks}) OR doc_a_id = ? OR doc_b_id = ?",
+                (*claim_ids, *claim_ids, document_id, document_id),
+            )
+            counts["eval_labels"] = el.rowcount
+            cp = conn.execute(f"DELETE FROM candidate_pairs WHERE id IN ({pq})", tuple(pair_ids))
+            counts["candidate_pairs"] = cp.rowcount
+        else:
+            # no pairs, but still staged/eval
+            sl = conn.execute(
+                f"DELETE FROM staged_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
+                (*claim_ids, *claim_ids),
+            )
+            counts["staged_labels"] = sl.rowcount
+            el = conn.execute(
+                f"DELETE FROM eval_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks}) OR doc_a_id = ? OR doc_b_id = ?",
+                (*claim_ids, *claim_ids, document_id, document_id),
+            )
+            counts["eval_labels"] = el.rowcount
+        # entity_mentions
+        em = conn.execute(f"DELETE FROM entity_mentions WHERE claim_id IN ({qmarks})", tuple(claim_ids))
+        counts["entity_mentions"] = em.rowcount
+        cl = conn.execute(f"DELETE FROM claims WHERE document_id = ?", (document_id,))
+        counts["claims"] = cl.rowcount
+    # staged/eval that reference doc directly even without claims (defensive)
+    if "staged_labels" not in counts:
+        sl = conn.execute("DELETE FROM staged_labels WHERE doc_a_id = ? OR doc_b_id = ?", (document_id, document_id))
+        counts["staged_labels"] = sl.rowcount
+        el = conn.execute("DELETE FROM eval_labels WHERE doc_a_id = ? OR doc_b_id = ?", (document_id, document_id))
+        counts["eval_labels"] = el.rowcount
+    doc = conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+    counts["documents"] = doc.rowcount
+    conn.commit()
+    return counts
+
+
+def list_documents(
+    conn: sqlite3.Connection,
+    *,
+    q: str | None = None,
+    source: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[sqlite3.Row], int]:
+    """Paginated document listing with optional search/source filter. Returns (rows, total)."""
+    where: list[str] = []
+    params: list[object] = []
+    if q:
+        where.append("(title LIKE ? OR raw_text LIKE ? OR path LIKE ?)")
+        like = f"%{q}%"
+        params.extend([like, like, like])
+    if source:
+        where.append("source = ?")
+        params.append(source)
+    where_sql = f" WHERE {' AND '.join(where)}" if where else ""
+    total = conn.execute(f"SELECT COUNT(*) FROM documents{where_sql}", tuple(params)).fetchone()[0]
+    rows = conn.execute(
+        f"SELECT id, source, source_id, title, path, format, length(raw_text) AS text_len, content_hash, ingested_at, parse_warnings_json, metadata_json FROM documents{where_sql} ORDER BY ingested_at DESC LIMIT ? OFFSET ?",
+        (*params, limit, offset),
+    ).fetchall()
+    return list(rows), int(total)
+
+
+def list_claims_for_document(
+    conn: sqlite3.Connection, document_id: str, *, limit: int = 100, offset: int = 0
+) -> tuple[list[sqlite3.Row], int]:
+    total = conn.execute("SELECT COUNT(*) FROM claims WHERE document_id = ?", (document_id,)).fetchone()[0]
+    rows = conn.execute(
+        "SELECT id, claim_text, citation_span_start, citation_span_end, entities_json, topics_json, temporal_json, scope_json, triviality_score, extraction_model FROM claims WHERE document_id = ? ORDER BY citation_span_start LIMIT ? OFFSET ?",
+        (document_id, limit, offset),
+    ).fetchall()
+    return list(rows), int(total)
+
+
+# Jobs helpers
+def insert_job(conn: sqlite3.Connection, kind: str, params: dict[str, object] | None = None) -> str:
+    jid = uuid.uuid4().hex
+    conn.execute(
+        "INSERT INTO jobs (id, kind, status, params_json, created_at) VALUES (?, ?, 'queued', ?, ?)",
+        (jid, kind, json.dumps(params) if params else None, datetime.now(UTC).isoformat()),
+    )
+    conn.commit()
+    return jid
+
+
+def update_job(conn: sqlite3.Connection, job_id: str, **fields: object) -> None:
+    sets: list[str] = []
+    params: list[object] = []
+    for k, v in fields.items():
+        sets.append(f"{k} = ?")
+        if k in ("params_json", "result_json") and isinstance(v, (dict, list)):
+            params.append(json.dumps(v))
+        else:
+            params.append(v)
+    if not sets:
+        return
+    params.append(job_id)
+    conn.execute(f"UPDATE jobs SET {', '.join(sets)} WHERE id = ?", tuple(params))
+    conn.commit()
+
+
+# Staged labels helpers
+def insert_staged_label(
+    conn: sqlite3.Connection,
+    *,
+    claim_a_id: str,
+    claim_b_id: str,
+    doc_a_id: str,
+    doc_b_id: str,
+    span_a_start: int,
+    span_a_end: int,
+    span_b_start: int,
+    span_b_end: int,
+    label: str,
+    labeled_by: str,
+    notes: str | None = None,
+) -> str:
+    sid = uuid.uuid4().hex
+    conn.execute(
+        "INSERT INTO staged_labels (id, claim_a_id, claim_b_id, doc_a_id, doc_b_id, span_a_start, span_a_end, span_b_start, span_b_end, label, notes, labeled_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)",
+        (sid, claim_a_id, claim_b_id, doc_a_id, doc_b_id, span_a_start, span_a_end, span_b_start, span_b_end, label, notes, labeled_by, datetime.now(UTC).isoformat()),
+    )
+    conn.commit()
+    return sid
+
+
+# Connections helpers
+def list_connections(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return list(conn.execute("SELECT * FROM connections ORDER BY created_at DESC"))

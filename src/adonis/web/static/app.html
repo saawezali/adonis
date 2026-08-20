@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adonis — Console</title>
+<style>
+  :root { --bg:#f8f9fb; --card:#fff; --bd:#e5e7eb; --fg:#111827; --muted:#6b7280; --accent:#1e3a5f; --accent2:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; --radius:10px; }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;margin:0;background:var(--bg);color:var(--fg)}
+  a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
+  header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:1rem;padding:.6rem 1rem}
+  header h1{font-size:1.05rem;margin:0;letter-spacing:.2px}
+  header h1 span{color:var(--muted);font-weight:400}
+  nav{display:flex;gap:.25rem;flex-wrap:wrap}
+  nav button{border:1px solid transparent;background:transparent;padding:.4rem .7rem;border-radius:999px;font-size:.84rem;cursor:pointer;color:var(--muted)}
+  nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  nav button:hover{border-color:var(--bd);color:var(--fg)}
+  .wrap{max-width:1120px;margin:1rem auto;padding:0 1rem}
+  .grid{display:grid;gap:.9rem}
+  .grid.cols2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.grid.cols4{grid-template-columns:repeat(2,1fr)} .grid.cols3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.grid.cols4,.grid.cols3,.grid.cols2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:1rem 1.1rem}
+  .card h2{font-size:1rem;margin:.1rem 0 .6rem}
+  .card h3{font-size:.9rem;margin:1rem 0 .4rem}
+  .muted{color:var(--muted);font-size:.84rem}
+  .hint{color:var(--muted);font-size:.78rem;margin-top:.25rem}
+  .row{display:flex;gap:.7rem;flex-wrap:wrap}
+  .row > *{flex:1}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:.55rem 0 .2rem}
+  input,select,textarea{width:100%;padding:.5rem .6rem;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  button{padding:.5rem .9rem;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:.88rem}
+  button:hover{background:#f1f5f9}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.primary:hover{background:#16304e}
+  button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  button.danger{border-color:#fecaca;color:var(--err);background:#fff}
+  button.danger:hover{background:#fef2f2}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .badge{font-size:.7rem;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;border:1px solid var(--bd);color:var(--muted)}
+  .badge.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+  .badge.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+  .badge.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+  .kpi{font-size:1.6rem;font-weight:700}
+  .kpi small{font-size:.75rem;font-weight:400;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:.86rem}
+  th,td{padding:.5rem .55rem;border-bottom:1px solid var(--bd);text-align:left}
+  th{font-size:.76rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  tr:hover td{background:#f8fafc}
+  .pill{font-size:.7rem;padding:.12rem .4rem;border-radius:999px}
+  .lbl-genuine_contradiction{color:var(--err);font-weight:600}
+  .lbl-superseded_by_time{color:var(--warn);font-weight:600}
+  .lbl-different_scope{color:#0369a1;font-weight:600}
+  .lbl-ambiguous{color:var(--muted);font-weight:600}
+  pre{background:#f6f8fa;padding:.7rem;border-radius:8px;overflow:auto;font-size:.8rem;max-height:360px}
+  .drop{border:2px dashed #cbd5e1;border-radius:var(--radius);padding:1.2rem;text-align:center;background:#fcfdff}
+  .drop.drag{border-color:var(--accent2);background:#eff6ff}
+  .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
+  .toolbar input{flex:1;min-width:160px}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:30;padding:1rem}
+  .modal.open{display:flex}
+  .modal .sheet{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);max-width:780px;width:100%;max-height:90vh;overflow:auto;padding:1rem 1.1rem}
+  .span-hl{background:#fef9c3;border-bottom:2px solid #facc15;padding:.05rem .15rem;border-radius:3px}
+  .page{display:none}
+  .page.active{display:block}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #cbd5e1;border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:14px;right:14px;background:#111827;color:#fff;padding:.6rem .9rem;border-radius:8px;font-size:.84rem;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;z-index:50}
+  .toast.show{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>Adonis <span>— contradiction finder · local</span></h1>
+  <nav id="nav" style="margin-left:auto">
+    <button data-page="dashboard" class="active">Dashboard</button>
+    <button data-page="documents">Documents</button>
+    <button data-page="connections">Connections</button>
+    <button data-page="pipeline">Pipeline</button>
+    <button data-page="flags">Flags</button>
+    <button data-page="eval">Eval</button>
+    <button data-page="settings">Settings</button>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <!-- DASHBOARD -->
+  <section id="page-dashboard" class="page active">
+    <div class="grid cols4" id="dash-kpis"></div>
+    <div class="grid cols2" style="margin-top:.9rem">
+      <div class="card">
+        <h2>Quick actions</h2>
+        <div class="row" style="margin:.6rem 0">
+          <button class="primary" onclick="navigate('documents')">+ Upload files</button>
+          <button onclick="navigate('pipeline')">Run pipeline</button>
+          <button onclick="navigate('flags')">View flags</button>
+        </div>
+        <p class="hint">Auto-ingest is on: every upload is ingested immediately. No need for manual ingest.</p>
+        <div class="toolbar">
+          <button id="dash-refresh">Refresh status</button>
+          <span id="dash-meta" class="muted"></span>
+        </div>
+        <pre id="dash-status" style="display:none"></pre>
+      </div>
+      <div class="card">
+        <h2>Recent jobs</h2>
+        <div id="dash-jobs" class="muted">loading…</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:.9rem">
+      <h2>How it works</h2>
+      <p class="muted" style="font-size:.88rem;line-height:1.5">
+        <b>Ingest</b> → <b>Extract claims</b> (LLM, GLiNER) → <b>Candidates</b> (embed + FAISS + entity) → <b>Judge</b> (LLM) → <b>Verify</b> (span + entailment) → <b>Flags</b>. 
+        Files are deduped by content hash. Flags need verification to surface. Use <b>Connections</b> to link Google Drive live sync.
+      </p>
+      <p><a href="/report" target="_blank">Open static HTML report →</a> &nbsp;·&nbsp; <a href="/reports/eval.json" target="_blank">eval.json</a></p>
+    </div>
+  </section>
+
+  <!-- DOCUMENTS -->
+  <section id="page-documents" class="page">
+    <div class="card">
+      <h2>Documents — your files</h2>
+      <p class="muted">Drop .md / .txt / .docx / .zip (Notion export). Auto-ingest on upload. Deleting removes the DB row only — original file on disk is untouched.</p>
+      <div id="drop" class="drop" style="margin:.7rem 0">
+        <p><b>Drop files here</b> or <label for="file-input" style="display:inline;color:var(--accent2);cursor:pointer;text-decoration:underline">browse</label></p>
+        <input id="file-input" type="file" multiple accept=".md,.txt,.docx,.zip,.markdown,.csv" style="display:none">
+        <p class="hint">Max <span id="upload-limit">100</span> MB per request. Zip files are scanned for markdown/csv entries.</p>
+      </div>
+      <div class="toolbar">
+        <input id="doc-q" placeholder="Search title / path / text…">
+        <select id="doc-source" style="max-width:160px">
+          <option value="">All sources</option>
+          <option value="local">local</option>
+          <option value="notion">notion</option>
+          <option value="gdrive">gdrive</option>
+        </select>
+        <button id="doc-search">Search</button>
+        <button id="doc-clear" class="ghost">Clear</button>
+        <span id="doc-total" class="muted"></span>
+      </div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Title</th><th>Source</th><th>Format</th><th>Length</th><th>Claims</th><th>Ingested</th><th></th></tr></thead>
+          <tbody id="doc-tbody"><tr><td colspan="7" class="muted">loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="toolbar">
+        <button id="doc-prev">‹ Prev</button>
+        <button id="doc-next">Next ›</button>
+        <span id="doc-page" class="muted"></span>
+      </div>
+      <pre id="doc-out" style="display:none"></pre>
+    </div>
+    <div class="card" id="doc-detail" style="display:none">
+      <h2 id="doc-detail-title">Document</h2>
+      <p class="muted" id="doc-detail-meta"></p>
+      <div class="toolbar">
+        <button id="doc-view-raw">View raw text</button>
+        <button id="doc-view-claims">Claims</button>
+        <button id="doc-delete" class="danger">Delete (DB row only)</button>
+        <button id="doc-detail-close" class="ghost">Close</button>
+      </div>
+      <div id="doc-detail-body"></div>
+    </div>
+  </section>
+
+  <!-- CONNECTIONS -->
+  <section id="page-connections" class="page">
+    <div class="card">
+      <h2>Connections — live sync</h2>
+      <p class="muted">Link folders and drives. Local and Notion are export-based; Google Drive can live-sync via OAuth (reads Drive files, auto-ingests). Single-user local — tokens stored in <code>.env</code> (600).</p>
+      <div class="grid cols3" style="margin:.6rem 0">
+        <div class="card" style="border-style:dashed">
+          <h3>Local folder</h3>
+          <label>Path</label><input id="conn-local-path" placeholder="/path/to/notes or data/corpus">
+          <label>Name</label><input id="conn-local-name" placeholder="My notes">
+          <button class="primary" style="margin-top:.6rem" onclick="createConn('local')">Add local</button>
+        </div>
+        <div class="card" style="border-style:dashed">
+          <h3>Notion export</h3>
+          <label>Zip path</label><input id="conn-notion-path" placeholder="/path/to/export.zip">
+          <label>Name</label><input id="conn-notion-name" placeholder="Notion">
+          <button class="primary" style="margin-top:.6rem" onclick="createConn('notion')">Add Notion</button>
+        </div>
+        <div class="card" style="border-style:dashed">
+          <h3>Google Drive</h3>
+          <p class="hint">Needs <code>ADONIS_GOOGLE_CLIENT_ID</code> + <code>SECRET</code> — set in Settings or .env (Google Cloud → OAuth client, redirect <code>http://127.0.0.1:8000/api/connections/drive/callback</code>).</p>
+          <button onclick="driveAuth()">Connect Drive (OAuth)</button>
+          <button onclick="driveSync()" style="margin-left:.4rem">Sync now</button>
+          <p class="hint" id="drive-hint"></p>
+        </div>
+      </div>
+      <h3>Your connections</h3>
+      <div id="conn-list" class="muted">loading…</div>
+      <pre id="conn-out" style="display:none"></pre>
+    </div>
+    <div class="card">
+      <h3>Google OAuth settings</h3>
+      <div class="row">
+        <div><label>Client ID</label><input id="g-client-id" placeholder="...apps.googleusercontent.com"></div>
+        <div><label>Client Secret</label><input id="g-client-secret" type="password" placeholder="••••"></div>
+      </div>
+      <label>Redirect URI</label><input id="g-redirect" placeholder="http://127.0.0.1:8000/api/connections/drive/callback">
+      <button id="g-save" style="margin-top:.6rem">Save Google settings</button>
+      <span id="g-save-out" class="muted" style="margin-left:.5rem"></span>
+      <p class="hint">After saving, click <b>Connect Drive</b> above to authorize. Tokens are saved to <code>.env</code> as <code>ADONIS_GOOGLE_REFRESH_TOKEN</code>.</p>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section id="page-pipeline" class="page">
+    <div class="card">
+      <h2>Pipeline — extract → candidates → judge → verify</h2>
+      <p class="hint">Runs locally. <code>Demo</code> is offline (no API key); <code>Real</code> uses the judge tier model from Settings.</p>
+      <div class="grid cols2">
+        <div>
+          <label>Run mode</label>
+          <select id="pipe-mode"><option value="demo">Demo (offline)</option><option value="llm">Real LLM (use_llm)</option></select>
+          <label><input type="checkbox" id="pipe-refresh"> Refresh (wipe candidates/judgments)</label>
+        </div>
+        <div>
+          <label>Top K (optional)</label><input id="pipe-topk" placeholder="20">
+          <label>Selected per claim</label><input id="pipe-spc" placeholder="3">
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="primary" id="pipe-run">Run pipeline (async)</button>
+        <button id="pipe-extract">Extract claims only</button>
+        <select id="pipe-extract-mode" style="max-width:140px"><option value="demo">Demo extract</option><option value="llm">Real extract</option></select>
+        <span id="pipe-spin" style="display:none"><span class="spinner"></span> working…</span>
+      </div>
+      <pre id="pipe-out" style="display:none"></pre>
+      <div id="pipe-job" class="muted"></div>
+    </div>
+    <div class="card">
+      <h3>Jobs</h3>
+      <div id="jobs-list" class="muted">loading…</div>
+    </div>
+  </section>
+
+  <!-- FLAGS -->
+  <section id="page-flags" class="page">
+    <div class="card">
+      <h2>Flags — contradictions found</h2>
+      <div class="toolbar">
+        <select id="flag-label" style="max-width:180px">
+          <option value="">All labels</option>
+          <option value="genuine_contradiction">genuine_contradiction</option>
+          <option value="superseded_by_time">superseded_by_time</option>
+          <option value="different_scope">different_scope</option>
+          <option value="ambiguous">ambiguous</option>
+        </select>
+        <select id="flag-verified" style="max-width:140px">
+          <option value="">Any verification</option>
+          <option value="pass">Verified pass</option>
+          <option value="fail">Verified fail</option>
+        </select>
+        <input id="flag-q" placeholder="Search claims / docs…">
+        <input id="flag-min" type="number" min="0" max="1" step="0.05" placeholder="min conf" style="max-width:110px">
+        <button id="flag-search">Filter</button>
+        <button id="flag-clear" class="ghost">Clear</button>
+      </div>
+      <div id="flags-list" class="muted">loading…</div>
+      <div class="toolbar">
+        <button id="flag-prev">‹ Prev</button>
+        <button id="flag-next">Next ›</button>
+        <span id="flag-page" class="muted"></span>
+        <span id="flag-total" class="muted"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVAL -->
+  <section id="page-eval" class="page">
+    <div class="card">
+      <h2>Eval — metrics + labeling</h2>
+      <div class="toolbar">
+        <button id="eval-refresh">Refresh metrics</button>
+        <span id="eval-meta" class="muted"></span>
+      </div>
+      <div id="eval-box" class="muted">loading…</div>
+    </div>
+    <div class="grid cols2">
+      <div class="card">
+        <h3>Label next pair</h3>
+        <div class="toolbar">
+          <select id="label-pool" style="max-width:160px"><option value="entity">entity</option><option value="near_dup">near_dup</option><option value="unrelated">unrelated</option></select>
+          <button id="label-next">Fetch</button>
+        </div>
+        <div id="label-pair" class="muted">Pick a pool and fetch.</div>
+        <div id="label-actions" style="display:none;margin-top:.6rem">
+          <div class="row" style="flex-wrap:wrap;gap:.35rem">
+            <button onclick="submitLabel('genuine_contradiction')" class="danger" style="font-size:.8rem">contradiction</button>
+            <button onclick="submitLabel('superseded_by_time')" style="font-size:.8rem">superseded</button>
+            <button onclick="submitLabel('different_scope')" style="font-size:.8rem">different scope</button>
+            <button onclick="submitLabel('ambiguous')" style="font-size:.8rem">ambiguous</button>
+            <button onclick="submitLabel('not_conflicting')" style="font-size:.8rem">not conflicting</button>
+            <button onclick="submitLabel('true_negative_near_dup')" style="font-size:.8rem">near_dup</button>
+            <button onclick="submitLabel('true_negative_unrelated')" style="font-size:.8rem">unrelated</button>
+          </div>
+          <label>Notes</label><input id="label-notes" placeholder="optional">
+          <p class="hint">Labels are staged for review (pending) — they don’t count until approved.</p>
+        </div>
+        <pre id="label-out" style="display:none"></pre>
+      </div>
+      <div class="card">
+        <h3>Staged queue — review before eval counts</h3>
+        <div class="toolbar">
+          <select id="staged-status" style="max-width:140px"><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="">all</option></select>
+          <button id="staged-refresh">Refresh</button>
+          <span id="staged-total" class="muted"></span>
+        </div>
+        <div id="staged-list" class="muted">loading…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS (integrated legacy) -->
+  <section id="page-settings" class="page">
+    <div class="card">
+      <h2>LLM provider & keys</h2>
+      <label for="provider">Provider</label>
+      <select id="provider"></select>
+      <p class="hint" id="provider-hint"></p>
+      <div class="row">
+        <div><label for="extractor_provider">Extractor tier (claims)</label><select id="extractor_provider"></select></div>
+        <div><label for="judge_provider">Judge tier (pairs)</label><select id="judge_provider"></select></div>
+      </div>
+      <label for="api_key">API key</label>
+      <input type="password" id="api_key" autocomplete="off" placeholder="">
+      <p class="hint">Leave blank to keep current key. Stored in <code>.env</code> (600).</p>
+      <label for="base_url">Base URL (custom inference / proxy)</label>
+      <input type="text" id="base_url" placeholder="e.g. http://localhost:11434/v1 (Ollama)">
+      <p class="hint" id="base-url-hint">For "custom" point at OpenAI-compatible endpoint: Ollama, vLLM, LM Studio…</p>
+      <div class="row">
+        <div><label for="extractor_model">Extractor model</label><input type="text" id="extractor_model"></div>
+        <div><label for="judge_model">Judge model</label><input type="text" id="judge_model"></div>
+      </div>
+      <button class="primary" id="save">Save settings</button>
+      <button id="test">Test connection</button>
+      <button id="reset-defaults">Reset to provider defaults</button>
+      <span id="spinner" style="display:none" class="muted">working…</span>
+      <pre id="result" style="display:none"></pre>
+    </div>
+    <div class="card">
+      <h3>Storage & runtime</h3>
+      <p class="muted" id="status-meta">loading…</p>
+      <p class="hint">Settings are live — server picks up <code>.env</code> on save. Corpus dir is <code>data/corpus</code>; uploads go to a temp dir and auto-ingest.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- doc modal -->
+<div id="doc-modal" class="modal"><div class="sheet"><div id="doc-modal-body"></div><button onclick="closeModal('doc-modal')" style="margin-top:.6rem">Close</button></div></div>
+<!-- flag modal -->
+<div id="flag-modal" class="modal"><div class="sheet"><div id="flag-modal-body"></div><button onclick="closeModal('flag-modal')" style="margin-top:.6rem">Close</button></div></div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const state = { defaults:{}, providers:[], dashboard:null, docOffset:0, docLimit:20, flagOffset:0, flagLimit:20, pendingPair:null, jobPoll:null, currentDoc:null };
+
+function toast(msg, ok=true){ const t=$('toast'); t.textContent=msg; t.style.background = ok? '#111827':'#991b1b'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500);}
+
+async function api(path, opts){
+  const res = await fetch(path, opts);
+  const text = await res.text();
+  let body; try{ body = text? JSON.parse(text): {}; }catch{ body = {detail:text}; }
+  if(!res.ok) throw new Error(body.detail || body.error || res.statusText);
+  return body;
+}
+
+function navActive(page){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  document.querySelectorAll('.page').forEach(s=>s.classList.remove('active'));
+  const el = $('page-'+page); if(el) el.classList.add('active');
+  location.hash = page;
+}
+function navigate(page){ navActive(page); if(page==='documents') loadDocs(); if(page==='flags') loadFlags(); if(page==='pipeline') loadJobs(); if(page==='eval') {loadEval(); loadStaged();} if(page==='connections') loadConns(); if(page==='dashboard') loadDashboard(); }
+document.querySelectorAll('#nav button').forEach(b=> b.addEventListener('click', ()=> navigate(b.dataset.page)));
+window.addEventListener('hashchange', ()=>{ const p=(location.hash||'#dashboard').slice(1); if(document.getElementById('page-'+p)) navActive(p); });
+
+function providerOptions(selected){ return state.providers.map(p=> `<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join(''); }
+function tierOptions(selected){ const opts=[`<option value="">use global (llm_provider)</option>`]; opts.push(...state.providers.map(p=> `<option value="${p}" ${p===selected?'selected':''}>${p}</option>`)); return opts.join(''); }
+function applyDefaults(provider){ const d=state.defaults[provider]||{}; $('base_url').value=d.base_url||''; $('extractor_model').value=d.extractor_model||''; $('judge_model').value=d.judge_model||''; }
+
+async function loadSettings(){
+  const s = await api('/api/settings');
+  state.providers=s.providers; state.defaults=s.defaults;
+  $('provider').innerHTML=providerOptions(s.llm_provider);
+  $('extractor_provider').innerHTML=tierOptions(s.extractor_provider||'');
+  $('judge_provider').innerHTML=tierOptions(s.judge_provider||'');
+  $('api_key').placeholder = s.key_set? `•••••• ${s.llm_api_key} (blank = unchanged)` : '(not set)';
+  $('base_url').value=s.llm_base_url||'';
+  $('extractor_model').value=s.extractor_model;
+  $('judge_model').value=s.judge_model;
+  $('g-client-id').value=''; $('g-client-secret').placeholder = s.google_configured? '•••• set':'not set';
+  $('g-redirect').value=s.google_redirect_uri||'http://127.0.0.1:8000/api/connections/drive/callback';
+  updateHints();
+  const st = await api('/api/status');
+  $('status-meta').textContent = `${st.documents} docs · ${st.claims} claims · ${st.candidate_pairs} candidates · ${st.flags} flags · ${st.eval_labels} labels (${st.staged_pending||0} pending) · judge: ${st.judge_effective}`;
+  $('dash-meta').textContent = `${st.documents} docs · ${st.claims} claims · ${st.flags} flags`;
+  $('dash-kpis').innerHTML = `
+    <div class="card"><div class="muted">Documents</div><div class="kpi">${st.documents}</div></div>
+    <div class="card"><div class="muted">Claims</div><div class="kpi">${st.claims}</div></div>
+    <div class="card"><div class="muted">Flags</div><div class="kpi">${st.flags} <small>verified</small></div></div>
+    <div class="card"><div class="muted">Staged labels</div><div class="kpi">${st.staged_pending||0} pending <small>/ ${st.eval_labels} approved</small></div></div>`;
+  state.dashboard=st;
+}
+function updateHints(){
+  const p=$('provider').value;
+  const hints={anthropic:'Anthropic Messages API (no base URL needed).', openai:'OpenAI Chat Completions API.', custom:'Any OpenAI-compatible server — Ollama, vLLM, LM Studio, Together, Groq.'};
+  $('provider-hint').textContent=`provider ${p} — ${hints[p]||''}`;
+  $('base_url').disabled = p==='anthropic';
+}
+function collect(){ return { llm_provider:$('provider').value, extractor_provider:$('extractor_provider').value, judge_provider:$('judge_provider').value, llm_api_key:$('api_key').value.trim(), llm_base_url:$('base_url').value.trim(), extractor_model:$('extractor_model').value.trim(), judge_model:$('judge_model').value.trim(), google_client_id: $('g-client-id').value.trim(), google_client_secret: $('g-client-secret').value.trim(), google_redirect_uri: $('g-redirect').value.trim() }; }
+function show(pre,obj, ok=true){ pre.style.display='block'; pre.textContent=JSON.stringify(obj,null,2); pre.style.color = ok?'#111827':'#991b1b'; }
+async function wrap(fn, pre){
+  $('spinner').style.display='inline';
+  try{ const out=await fn(); show(pre,out,true); toast('Saved'); await loadSettings(); }catch(e){ show(pre,{error:String(e.message||e)}, false); toast(String(e.message), false); }finally{ $('spinner').style.display='none'; }
+}
+$('provider').addEventListener('change', updateHints);
+$('reset-defaults').addEventListener('click', ()=> applyDefaults($('provider').value));
+$('save').addEventListener('click', ()=> wrap(async()=> api('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())}), $('result')));
+$('test').addEventListener('click', ()=> wrap(async()=> api('/api/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())}), $('result')));
+$('g-save').addEventListener('click', async()=>{
+  const body={ google_client_id:$('g-client-id').value.trim(), google_client_secret:$('g-client-secret').value.trim(), google_redirect_uri:$('g-redirect').value.trim() };
+  // reuse settings endpoint keys
+  const patch={};
+  if(body.google_client_id) patch.ADONIS_GOOGLE_CLIENT_ID=body.google_client_id;
+  if(body.google_client_secret) patch.ADONIS_GOOGLE_CLIENT_SECRET=body.google_client_secret;
+  if(body.google_redirect_uri) patch.ADONIS_GOOGLE_REDIRECT_URI=body.google_redirect_uri;
+  if(!Object.keys(patch).length){ toast('Nothing to save', false); return; }
+  try{ await api('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({llm_provider:'', extractor_provider:'', judge_provider:'', llm_api_key:'', llm_base_url:'', extractor_model:'', judge_model:'', google_client_id: body.google_client_id, google_client_secret: body.google_client_secret, google_redirect_uri: body.google_redirect_uri})}); $('g-save-out').textContent='saved'; toast('Google settings saved'); await loadSettings(); }catch(e){ $('g-save-out').textContent=String(e.message); toast(String(e.message), false); }
+});
+
+// Dashboard
+async function loadDashboard(){
+  try{ await loadSettings(); }catch(e){ $('dash-meta').textContent='failed: '+e.message; }
+  loadJobs('dash-jobs');
+}
+$('dash-refresh').addEventListener('click', loadDashboard);
+
+// Documents
+async function loadDocs(){
+  const q=$('doc-q').value.trim();
+  const source=$('doc-source').value;
+  const params=new URLSearchParams({limit:String(state.docLimit), offset:String(state.docOffset)});
+  if(q) params.set('q', q);
+  if(source) params.set('source', source);
+  const data = await api('/api/documents?'+params.toString());
+  const tb=$('doc-tbody');
+  if(!data.items.length){ tb.innerHTML=`<tr><td colspan="7" class="muted">No documents. Drop files above.</td></tr>`; }
+  else {
+    tb.innerHTML = data.items.map(d=> `
+      <tr>
+        <td><a href="#" onclick="openDoc('${d.id}');return false"><b>${esc(d.title||'(untitled)')}</b></a><div class="muted" style="font-size:.75rem">${esc(d.path||'')}</div></td>
+        <td><span class="badge">${esc(d.source)}</span></td>
+        <td>${esc(d.format||'')}</td>
+        <td>${d.text_len}</td>
+        <td>${d.claims}</td>
+        <td class="muted" style="font-size:.78rem">${(d.ingested_at||'').slice(0,19)}</td>
+        <td><button onclick="openDoc('${d.id}')">Open</button></td>
+      </tr>`).join('');
+  }
+  $('doc-total').textContent=`${data.total} total`;
+  $('doc-page').textContent=`${state.docOffset}-${Math.min(data.total, state.docOffset+data.items.length)} of ${data.total}`;
+}
+function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+$('doc-search').addEventListener('click', ()=>{ state.docOffset=0; loadDocs(); });
+$('doc-clear').addEventListener('click', ()=>{ $('doc-q').value=''; $('doc-source').value=''; state.docOffset=0; loadDocs(); });
+$('doc-q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.docOffset=0; loadDocs(); }});
+$('doc-prev').addEventListener('click', ()=>{ state.docOffset=Math.max(0, state.docOffset-state.docLimit); loadDocs(); });
+$('doc-next').addEventListener('click', ()=>{ state.docOffset+=state.docLimit; loadDocs(); });
+
+async function openDoc(id){
+  const data = await api('/api/documents/'+id);
+  state.currentDoc = data;
+  const d=$('doc-detail'); d.style.display='block';
+  $('doc-detail-title').textContent = data.title || '(untitled)';
+  $('doc-detail-meta').textContent = `${data.source} · ${data.format} · ${data.raw_text.length} chars · ${data.content_hash.slice(0,12)}… · ${data.ingested_at}`;
+  $('doc-detail-body').innerHTML = `<p class="muted">Claims preview (first ${data.preview_claims.length}):</p>` + (data.preview_claims.map(c=> `<div style="border-left:3px solid #e5e7eb;padding:.35rem .6rem;margin:.4rem 0"><div>${esc(c.claim_text)}</div><div class="muted" style="font-size:.76rem">span ${c.span[0]}:${c.span[1]} · topics ${(c.topics||[]).join(', ')}</div></div>`).join('') || '<p class="muted">No claims yet — run Extract in Pipeline.</p>');
+  d.scrollIntoView({behavior:'smooth'});
+}
+$('doc-detail-close').addEventListener('click', ()=> $('doc-detail').style.display='none');
+$('doc-view-raw').addEventListener('click', async()=>{
+  if(!state.currentDoc) return;
+  const data = await api('/api/documents/'+state.currentDoc.id+'/text');
+  const hl = data.raw_text.slice(0, 6000);
+  const body = `<h3>${esc(data.title)} — raw_text</h3><pre>${esc(hl)}</pre><p class="muted">${data.raw_text.length>6000?'… truncated 6000 chars':''}</p>`;
+  $('doc-modal-body').innerHTML=body; $('doc-modal').classList.add('open');
+});
+$('doc-view-claims').addEventListener('click', async()=>{
+  if(!state.currentDoc) return;
+  const claims = await api('/api/claims?document_id='+state.currentDoc.id+'&limit=50');
+  const body = `<h3>Claims — ${esc(state.currentDoc.title)}</h3>` + (claims.items.map(c=> `<div class="card" style="margin:.5rem 0"><div>${esc(c.claim_text)}</div><div class="muted" style="font-size:.78rem">span ${c.citation_span_start}:${c.citation_span_end} · entities ${(c.entities||[]).join(', ')||'—'} · topics ${(c.topics||[]).join(', ')||'—'}</div>${c.temporal? `<div class="hint">temporal: ${esc(JSON.stringify(c.temporal))}</div>`:''}${c.scope? `<div class="hint">scope: ${esc(JSON.stringify(c.scope))}</div>`:''}</div>`).join('')||'<p class="muted">No claims.</p>');
+  $('doc-modal-body').innerHTML=body; $('doc-modal').classList.add('open');
+});
+$('doc-delete').addEventListener('click', async()=>{
+  if(!state.currentDoc) return;
+  if(!confirm(`Delete DB row for "${state.currentDoc.title}"? This removes its claims/flags but NOT the original file on disk. This cannot be undone.`)) return;
+  try{ const out= await api('/api/documents/'+state.currentDoc.id, {method:'DELETE'}); toast('Deleted '+out.deleted); $('doc-detail').style.display='none'; state.currentDoc=null; loadDocs(); loadDashboard(); }catch(e){ toast(String(e.message), false); }
+});
+function closeModal(id){ $(id).classList.remove('open'); }
+$('doc-modal').addEventListener('click', e=>{ if(e.target.id==='doc-modal') closeModal('doc-modal'); });
+
+// Upload (auto-ingest)
+const drop=$('drop'); const fileInput=$('file-input');
+['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('drag');}));
+drop.addEventListener('drop', e=>{ const files=e.dataTransfer.files; if(files.length) doUpload(files); });
+$('file-input').addEventListener('change', ()=>{ if(fileInput.files.length) doUpload(fileInput.files); });
+async function doUpload(fileList){
+  const fd=new FormData();
+  for(const f of fileList) fd.append('files', f, f.name);
+  $('doc-out').style.display='block'; $('doc-out').textContent='uploading…';
+  try{
+    const res = await fetch('/api/documents/upload', {method:'POST', body:fd});
+    const body=await res.json();
+    if(!res.ok) throw new Error(body.detail||res.statusText);
+    $('doc-out').textContent=JSON.stringify(body,null,2);
+    toast(`Ingested ${body.inserted} new docs (${body.files_seen} files)`);
+    loadDocs(); loadDashboard();
+  }catch(e){ $('doc-out').textContent=String(e.message||e); toast(String(e.message), false); }
+}
+
+// Connections
+async function loadConns(){
+  const data = await api('/api/connections');
+  const el=$('conn-list');
+  if(!data.items.length){ el.innerHTML='<p class="muted">No connections yet. Add one above.</p>'; return; }
+  el.innerHTML = data.items.map(c=> `
+    <div class="card" style="margin:.5rem 0">
+      <div class="row" style="align-items:center"><b>${esc(c.name)}</b> <span class="badge ${c.status==='connected'?'ok':c.status==='error'?'err':'warn'}">${esc(c.status)}</span> <span class="badge">${esc(c.kind)}</span> <span class="muted" style="margin-left:auto;font-size:.78rem">${esc(c.created_at||'')}</span></div>
+      <div class="muted" style="font-size:.78rem;margin-top:.25rem">config: ${esc(JSON.stringify(c.config||{}))}</div>
+      ${c.last_sync_at? `<div class="hint">last sync: ${esc(c.last_sync_at)} · ${esc(JSON.stringify(c.last_sync_stats||{}))}</div>`:''}
+      ${c.error? `<div style="color:var(--err);font-size:.82rem;margin-top:.3rem">${esc(c.error)}</div>`:''}
+      <div class="toolbar"><button onclick="syncConn('${c.id}')">Sync now</button><button class="danger" onclick="delConn('${c.id}')">Delete</button></div>
+    </div>`).join('');
+}
+async function createConn(kind){
+  const nameEl = kind==='local'? $('conn-local-name'): kind==='notion'? $('conn-notion-name'): null;
+  const pathEl = kind==='local'? $('conn-local-path'): $('conn-notion-path');
+  const name = nameEl? nameEl.value.trim(): kind;
+  const path = pathEl? pathEl.value.trim(): '';
+  if(!path){ toast('Path required', false); return; }
+  try{ const out= await api('/api/connections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind, name, config:{path}})}); toast('Added '+out.kind); loadConns(); }catch(e){ toast(String(e.message), false); }
+}
+async function syncConn(id){
+  const outEl=$('conn-out'); outEl.style.display='block'; outEl.textContent='syncing…';
+  try{ const out= await api('/api/connections/'+id+'/sync',{method:'POST'}); outEl.textContent=JSON.stringify(out,null,2); toast('Sync done'); loadConns(); loadDocs(); loadDashboard(); }catch(e){ outEl.textContent=String(e.message); toast(String(e.message), false); }
+}
+async function delConn(id){ if(!confirm('Delete connection?')) return; try{ await api('/api/connections/'+id,{method:'DELETE'}); toast('Deleted'); loadConns(); }catch(e){ toast(String(e.message), false); } }
+async function driveAuth(){
+  try{ const data= await api('/api/connections/drive/auth'); window.open(data.auth_url, '_blank'); $('drive-hint').textContent='Opened consent screen — approve then return. Tokens saved to .env.'; toast('Opened Drive consent'); }catch(e){ $('drive-hint').textContent=String(e.message); toast(String(e.message), false); }
+}
+async function driveSync(){
+  $('conn-out').style.display='block'; $('conn-out').textContent='syncing Drive…';
+  try{ const out= await api('/api/connections/drive/sync',{method:'POST'}); $('conn-out').textContent=JSON.stringify(out,null,2); toast(`Drive sync: ${out.inserted} inserted`); loadConns(); loadDocs(); loadDashboard(); }catch(e){ $('conn-out').textContent=String(e.message); toast(String(e.message), false); }
+}
+
+// Pipeline
+async function loadJobs(targetId){
+  const data= await api('/api/jobs?limit=10');
+  const render = (items)=> items.length? items.map(j=> `
+    <div class="card" style="margin:.4rem 0;padding:.6rem .8rem">
+      <div><span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> <b>${esc(j.kind)}</b> <span class="muted" style="font-size:.78rem">${esc(j.created_at||'')}</span></div>
+      <div class="muted" style="font-size:.78rem">params: ${esc(JSON.stringify(j.params||{}))}</div>
+      ${j.result? `<div class="hint">claims ${j.result.claims} · candidates ${j.result.candidates} · flags ${j.result.flags} · faithfulness ${j.result.citation_faithfulness!=null?(j.result.citation_faithfulness*100).toFixed(0)+'%':'n/a'}</div>`:''}
+      ${j.error? `<div style="color:var(--err);font-size:.82rem">${esc(j.error)}</div>`:''}
+    </div>`).join('') : '<p class="muted">No jobs yet.</p>';
+  if(targetId) $(targetId).innerHTML = render(data.items);
+  else $('jobs-list').innerHTML = render(data.items);
+}
+$('pipe-run').addEventListener('click', async()=>{
+  const mode=$('pipe-mode').value;
+  const refresh=$('pipe-refresh').checked;
+  const top_k=$('pipe-topk').value.trim()? parseInt($('pipe-topk').value.trim(),10): null;
+  const spc=$('pipe-spc').value.trim()? parseInt($('pipe-spc').value.trim(),10): null;
+  const payload={ use_llm: mode==='llm', refresh, top_k, selected_per_claim: spc };
+  // clean nulls
+  Object.keys(payload).forEach(k=> payload[k]==null && delete payload[k]);
+  $('pipe-spin').style.display='inline'; $('pipe-out').style.display='block'; $('pipe-out').textContent='creating job…';
+  try{
+    const job= await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    $('pipe-out').textContent=JSON.stringify(job,null,2);
+    $('pipe-job').textContent=`job ${job.job_id} queued — polling…`;
+    toast('Pipeline job queued');
+    pollJob(job.job_id);
+    loadJobs();
+  }catch(e){ $('pipe-out').textContent=String(e.message); toast(String(e.message), false); }finally{ $('pipe-spin').style.display='none'; }
+});
+function pollJob(jobId){
+  if(state.jobPoll) clearInterval(state.jobPoll);
+  state.jobPoll=setInterval(async()=>{
+    try{
+      const j= await api('/api/jobs/'+jobId);
+      $('pipe-job').innerHTML = `<span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> ${esc(j.kind)} ${j.started_at? '· started '+esc(j.started_at.slice(11,19)):''} ${j.finished_at? '· finished '+esc(j.finished_at.slice(11,19)):''} ${j.error? '<br><span style="color:var(--err)">'+esc(j.error)+'</span>':''} ${j.result? '<pre style="margin-top:.4rem">'+esc(JSON.stringify(j.result,null,2))+'</pre>':''}`;
+      if(j.status==='done' || j.status==='error'){ clearInterval(state.jobPoll); loadDashboard(); loadJobs(); if(j.status==='done') toast('Pipeline done'); }
+    }catch(e){ clearInterval(state.jobPoll); $('pipe-job').textContent='poll failed: '+e.message; }
+  }, 1200);
+}
+$('pipe-extract').addEventListener('click', async()=>{
+  const mode=$('pipe-extract-mode').value;
+  $('pipe-out').style.display='block'; $('pipe-out').textContent='extracting…';
+  try{ const out= await api('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({use_llm: mode==='llm'})}); $('pipe-out').textContent=JSON.stringify(out,null,2); toast(`Extracted ${out.claims_inserted} claims`); loadDashboard(); }catch(e){ $('pipe-out').textContent=String(e.message); toast(String(e.message), false); }
+});
+
+// Flags
+async function loadFlags(){
+  const label=$('flag-label').value;
+  const verified=$('flag-verified').value;
+  const q=$('flag-q').value.trim();
+  const min=$('flag-min').value.trim();
+  const params=new URLSearchParams({limit:String(state.flagLimit), offset:String(state.flagOffset)});
+  if(label) params.set('label', label);
+  if(verified) params.set('verified', verified);
+  if(q) params.set('q', q);
+  if(min) params.set('min_conf', min);
+  const data= await api('/api/flags?'+params.toString());
+  const el=$('flags-list');
+  if(!data.items.length){ el.innerHTML='<p class="muted">No flags. Run pipeline first.</p>'; }
+  else {
+    el.innerHTML = data.items.map(f=> `
+      <div class="card" style="margin:.6rem 0">
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+          <span class="lbl-${esc(f.final_label)}">${esc(f.final_label)}</span>
+          <span class="badge">conf ${Number(f.final_confidence).toFixed(2)}</span>
+          ${f.verification.overall_pass? '<span class="badge ok">verified</span>':'<span class="badge err">verify fail</span>'}
+          ${f.user_decision? `<span class="badge warn">you: ${esc(f.user_decision)}</span>`:''}
+          <span class="muted" style="margin-left:auto;font-size:.78rem">${esc(f.judge_model)} · ${esc(f.prompt_version)}</span>
+        </div>
+        <div style="margin:.6rem 0;display:grid;gap:.5rem">
+          <div style="border-left:3px solid #e5e7eb;padding:.4rem .6rem">
+            <div class="muted" style="font-size:.76rem">${esc(f.doc_a_title)} <a href="#" onclick="viewDocText('${f.doc_a_id}');return false">[view]</a></div>
+            <div style="font-size:.88rem">&ldquo;${esc(f.text_a)}&rdquo;</div>
+            <div class="hint" style="background:#fdf6e3;border-left:3px solid #f2c94c;padding:.25rem .5rem;margin-top:.3rem">&ldquo;…${esc(f.raw_a? f.raw_a.slice(f.span_a[0]-60,f.span_a[0]+120):'') }…&rdquo;</div>
+          </div>
+          <div style="border-left:3px solid #e5e7eb;padding:.4rem .6rem">
+            <div class="muted" style="font-size:.76rem">${esc(f.doc_b_title)} <a href="#" onclick="viewDocText('${f.doc_b_id}');return false">[view]</a></div>
+            <div style="font-size:.88rem">&ldquo;${esc(f.text_b)}&rdquo;</div>
+            <div class="hint" style="background:#fdf6e3;border-left:3px solid #f2c94c;padding:.25rem .5rem;margin-top:.3rem">&ldquo;…${esc(f.raw_b? f.raw_b.slice(f.span_b[0]-60,f.span_b[0]+120):'') }…&rdquo;</div>
+          </div>
+        </div>
+        <details><summary class="muted" style="cursor:pointer">judge reasoning · verify: verbatim ${f.verification.span_a_verbatim?'✓':'✗'}/${f.verification.span_b_verbatim?'✓':'✗'} · fuzzy ${Math.round(f.verification.span_a_fuzzy)}/${Math.round(f.verification.span_b_fuzzy)} · entail ${Number(f.verification.span_a_entailment).toFixed(2)}/${Number(f.verification.span_b_entailment).toFixed(2)}</summary><div style="font-size:.84rem;color:var(--muted);margin-top:.4rem;font-style:italic">${esc(f.reasoning||'—')}</div></details>
+        <div class="toolbar">
+          <button onclick="triageFlag('${f.id}','confirmed')" style="font-size:.82rem">Confirm</button>
+          <button onclick="triageFlag('${f.id}','rejected')" style="font-size:.82rem">Reject</button>
+          <button onclick="triageFlag('${f.id}','unsure')" style="font-size:.82rem">Unsure</button>
+          <button onclick="viewFlag('${f.id}')" class="ghost" style="font-size:.82rem">Details</button>
+        </div>
+      </div>`).join('');
+  }
+  $('flag-total').textContent=`${data.total} total`;
+  $('flag-page').textContent=`${state.flagOffset}-${Math.min(data.total, state.flagOffset+data.items.length)} of ${data.total}`;
+}
+$('flag-search').addEventListener('click', ()=>{ state.flagOffset=0; loadFlags(); });
+$('flag-clear').addEventListener('click', ()=>{ $('flag-label').value=''; $('flag-verified').value=''; $('flag-q').value=''; $('flag-min').value=''; state.flagOffset=0; loadFlags(); });
+$('flag-prev').addEventListener('click', ()=>{ state.flagOffset=Math.max(0, state.flagOffset-state.flagLimit); loadFlags(); });
+$('flag-next').addEventListener('click', ()=>{ state.flagOffset+=state.flagLimit; loadFlags(); });
+async function triageFlag(id, decision){
+  const notes = prompt(`Notes for ${decision}? (optional)`, '');
+  if(notes===null) return;
+  try{ await api('/api/flags/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_decision:decision, notes: notes||null})}); toast(decision); loadFlags(); }catch(e){ toast(String(e.message), false); }
+}
+async function viewFlag(id){
+  const data= await api('/api/flags?limit=200');
+  const f=data.items.find(x=>x.id===id);
+  if(!f) return;
+  $('flag-modal-body').innerHTML = `<h3>${esc(f.final_label)} · ${Number(f.final_confidence).toFixed(2)}</h3><pre>${esc(JSON.stringify(f,null,2))}</pre>`;
+  $('flag-modal').classList.add('open');
+}
+$('flag-modal').addEventListener('click', e=>{ if(e.target.id==='flag-modal') closeModal('flag-modal'); });
+async function viewDocText(docId){
+  const data= await api('/api/documents/'+docId+'/text');
+  $('doc-modal-body').innerHTML=`<h3>${esc(data.title)}</h3><pre>${esc(data.raw_text.slice(0,5000))}</pre>`;
+  $('doc-modal').classList.add('open');
+}
+
+// Eval
+async function loadEval(){
+  try{
+    const st= await api('/api/eval/status');
+    $('eval-meta').textContent=`${st.total} labels · ${st.staged_pending} pending · breakdown: ${Object.entries(st.breakdown).map(([k,v])=>`${k}:${v}`).join(' · ')||'—'}`;
+  }catch(e){ $('eval-meta').textContent='status failed: '+e.message; }
+  try{
+    const data= await api('/api/eval');
+    const cats = data.categories||{};
+    const rows = Object.entries(cats).map(([cat, m])=> `<tr><td><b>${esc(cat)}</b></td><td>${m.tp}</td><td>${m.fp}</td><td>${m.fn}</td><td>${Number(m.precision).toFixed(2)}</td><td>${Number(m.recall).toFixed(2)}</td><td>${Number(m.f1).toFixed(2)}</td></tr>`).join('');
+    $('eval-box').innerHTML = `
+      <div class="grid cols3">
+        <div><b>Micro</b> P ${Number((data.micro||{}).precision||0).toFixed(2)} · R ${Number((data.micro||{}).recall||0).toFixed(2)} · F1 ${Number((data.micro||{}).f1||0).toFixed(2)}</div>
+        <div><b>Macro F1</b> ${Number(data.macro_f1||0).toFixed(2)}</div>
+        <div><b>Detection</b> R ${Number(data.detection_recall||0).toFixed(2)} · P ${Number(data.detection_precision||0).toFixed(2)}</div>
+      </div>
+      <div style="margin-top:.6rem"><b>Citation faithfulness</b> ${data.citation_faithfulness!=null? (data.citation_faithfulness*100).toFixed(0)+'%':'n/a'} · labeled ${data.n_labeled} · judged ${data.n_judged} · verified ${data.n_verified}</div>
+      <div style="overflow:auto;margin-top:.6rem"><table><thead><tr><th>Category</th><th>TP</th><th>FP</th><th>FN</th><th>P</th><th>R</th><th>F1</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted">No categories yet — label pairs first.</td></tr>'}</tbody></table></div>
+      <pre style="margin-top:.6rem">${esc(JSON.stringify(data,null,2))}</pre>`;
+  }catch(e){ $('eval-box').textContent='eval failed: '+e.message; }
+}
+$('eval-refresh').addEventListener('click', loadEval);
+
+$('label-next').addEventListener('click', async()=>{
+  const pool=$('label-pool').value;
+  try{
+    const data= await api('/api/labels/pending?pool='+pool+'&limit=20');
+    if(!data.items.length){ $('label-pair').innerHTML='<p class="muted">No pending pairs in this pool. Try another pool or run extract/pipeline.</p>'; $('label-actions').style.display='none'; state.pendingPair=null; return; }
+    const p=data.items[0]; state.pendingPair=p;
+    $('label-pair').innerHTML = `
+      <div style="border-left:3px solid var(--accent);padding:.5rem .6rem;margin:.5rem 0"><div class="muted" style="font-size:.76rem">${esc(p.a_doc)} · ${p.a_start}:${p.a_end}</div><div>${esc(p.a_text)}</div></div>
+      <div style="border-left:3px solid var(--accent);padding:.5rem .6rem;margin:.5rem 0"><div class="muted" style="font-size:.76rem">${esc(p.b_doc)} · ${p.b_start}:${p.b_end}</div><div>${esc(p.b_text)}</div></div>
+      <div class="hint">Claim IDs: ${esc(p.a_id.slice(0,8))}… ↔ ${esc(p.b_id.slice(0,8))}…</div>`;
+    $('label-actions').style.display='block';
+  }catch(e){ $('label-pair').textContent='fetch failed: '+e.message; }
+});
+async function submitLabel(label){
+  if(!state.pendingPair){ toast('No pair fetched', false); return; }
+  const notes=$('label-notes').value.trim()||null;
+  try{
+    const out= await api('/api/labels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({claim_a_id: state.pendingPair.a_id, claim_b_id: state.pendingPair.b_id, label, notes})});
+    $('label-out').style.display='block'; $('label-out').textContent=JSON.stringify(out,null,2);
+    toast('Label staged for review');
+    $('label-notes').value='';
+    $('label-pair').innerHTML='<p class="muted">Staged — fetching next…</p>';
+    $('label-actions').style.display='none';
+    state.pendingPair=null;
+    loadStaged(); loadEval(); loadDashboard();
+    // auto fetch next after short delay
+    setTimeout(()=> $('label-next').click(), 500);
+  }catch(e){ toast(String(e.message), false); }
+}
+async function loadStaged(){
+  const status=$('staged-status').value;
+  const params=new URLSearchParams({limit:'20', offset:'0'});
+  if(status) params.set('status', status);
+  try{
+    const data= await api('/api/labels/staged?'+params.toString());
+    $('staged-total').textContent=`${data.total} total · ${data.staged_pending} pending`;
+    if(!data.items.length){ $('staged-list').innerHTML='<p class="muted">Empty queue.</p>'; return; }
+    $('staged-list').innerHTML = data.items.map(r=> `
+      <div class="card" style="margin:.4rem 0;padding:.6rem .8rem">
+        <div><span class="badge ${r.status==='pending'?'warn':r.status==='approved'?'ok':'err'}">${esc(r.status)}</span> <b>${esc(r.label)}</b> <span class="muted" style="font-size:.78rem">${esc(r.labeled_by)} → ${esc(r.created_at.slice(0,19))}</span></div>
+        <div class="hint">${esc(r.claim_a_id.slice(0,8))}… ↔ ${esc(r.claim_b_id.slice(0,8))}…</div>
+        ${r.notes? `<div style="font-size:.84rem;margin-top:.25rem">${esc(r.notes)}</div>`:''}
+        ${r.status==='pending'? `<div class="toolbar"><button onclick="reviewStaged('${r.id}','approve')">Approve</button><button class="danger" onclick="reviewStaged('${r.id}','reject')">Reject</button></div>`: `<div class="hint">reviewed by ${esc(r.reviewed_by||'—')} · ${esc(r.reviewed_at||'')}</div>`}
+      </div>`).join('');
+  }catch(e){ $('staged-list').textContent='failed: '+e.message; }
+}
+async function reviewStaged(id, action){
+  const notes = prompt(`Notes for ${action}?`, '');
+  if(notes===null) return;
+  try{ await api('/api/labels/staged/'+id+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action, notes: notes||null})}); toast(action); loadStaged(); loadEval(); loadDashboard(); }catch(e){ toast(String(e.message), false); }
+}
+$('staged-refresh').addEventListener('click', loadStaged);
+$('staged-status').addEventListener('change', loadStaged);
+
+// Boot
+(async()=>{
+  const p=(location.hash||'#dashboard').slice(1);
+  if(document.getElementById('page-'+p)) navActive(p); else navActive('dashboard');
+  try{ await loadSettings(); }catch(e){ $('status-meta').textContent='failed: '+e.message; }
+  loadDashboard(); loadDocs(); loadConns(); loadJobs(); loadEval(); loadStaged();
+})();
+</script>
+</body>
+</html>
