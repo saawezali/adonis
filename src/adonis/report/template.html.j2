@@ -2,64 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Adonis flags report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adonis — flags report</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
-  h1 { font-size: 1.3rem; }
-  .meta { color: #666; font-size: .85rem; margin-bottom: 1.5rem; }
-  .flag { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .flag .label { font-weight: 600; font-size: .95rem; }
-  .lbl-genuine_contradiction { color: #b00020; }
-  .lbl-superseded_by_time { color: #b26a00; }
-  .lbl-different_scope { color: #00609c; }
-  .lbl-ambiguous { color: #666; }
-  .conf { float: right; color: #444; }
-  .side { margin-top: .5rem; }
-  .side .doc { font-size: .8rem; color: #555; margin-bottom: .2rem; }
-  .side .goal { color: #444; }
-  .side .span { background: #fdf6e3; border-left: 3px solid #f2c94c; padding: .25rem .5rem; font-size: .85rem; }
-  .side .span a { color: inherit; }
-  .verify { color: #777; font-size: .78rem; margin-top: .4rem; }
-  .reason { color: #666; font-size: .85rem; margin-top: .4rem; font-style: italic; }
-  .badge { font-size: .7rem; padding: .1rem .4rem; border-radius: 4px; background: #eee; }
-  details { margin-top: .4rem; }
-  summary { cursor: pointer; color: #555; font-size: .8rem; }
+  :root{--bg:#f8fafc;--card:#fff;--bd:#e2e8f0;--bd2:#cbd5e1;--fg:#0f172a;--muted:#64748b;--accent:#0f2a44;--accent2:#2563eb;--ok:#0f766e;--err:#be123c;--warn:#a16207;--info:#0369a1;--radius:12px;--shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06)}
+  *{box-sizing:border-box} body{font-family:ui-sans-system,system-ui,sans-serif;margin:0;background:var(--bg);color:var(--fg);line-height:1.5}
+  a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
+  header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);padding:.7rem 1.1rem;display:flex;align-items:center;gap:.8rem}
+  .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#334155);display:grid;place-items:center;color:#fff;font-weight:800;font-size:.76rem}
+  .wrap{max-width:980px;margin:1.2rem auto;padding:0 1rem}
+  .meta{color:var(--muted);font-size:.84rem;margin:.4rem 0 1rem}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin:.8rem 0 1.1rem}
+  @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:.8rem .9rem;box-shadow:var(--shadow)}
+  .kpi b{font-size:1.35rem;letter-spacing:-.02em} .kpi .lbl{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .flag{background:var(--card);border:1px solid var(--bd);border-left-width:4px;border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:.9rem;box-shadow:var(--shadow)}
+  .flag.gen{border-left-color:var(--err)} .flag.sup{border-left-color:var(--warn)} .flag.scope{border-left-color:var(--info)} .flag.amb{border-left-color:var(--muted)}
+  .topline{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
+  .label{font-weight:700;font-size:.88rem;letter-spacing:-.01em}
+  .lbl-genuine_contradiction{color:var(--err)} .lbl-superseded_by_time{color:var(--warn)} .lbl-different_scope{color:var(--info)} .lbl-ambiguous{color:var(--muted)}
+  .conf{margin-left:auto;display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted)}
+  .bar{width:82px;height:6px;background:#f1f5f9;border-radius:999px;overflow:hidden;border:1px solid var(--bd)}
+  .fill{height:100%;border-radius:999px}
+  .side{margin:.55rem 0;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+  .side-head{padding:.45rem .7rem;background:#f8fafc;border-bottom:1px solid var(--bd);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+  .doc{font-size:.82rem;font-weight:600} .badge{font-size:.68rem;font-weight:600;padding:.12rem .4rem;border-radius:999px;background:#f1f5f9;border:1px solid var(--bd);color:var(--muted)}
+  .badge.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46} .badge.err{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+  .goal{padding:.6rem .75rem;font-size:.92rem}
+  .span{margin:0 .75rem .7rem;background:#fefce8;border-left:3px solid #facc15;padding:.4rem .6rem;border-radius:6px;font-size:.86rem;color:#422006}
+  .verify{color:var(--muted);font-size:.76rem;margin-top:.4rem}
+  .reason{color:#475569;font-size:.84rem;margin-top:.4rem;font-style:italic;background:#f8fafc;border:1px solid var(--bd);padding:.6rem .7rem;border-radius:8px}
+  details{margin-top:.5rem} summary{cursor:pointer;color:var(--muted);font-size:.82rem}
+  .empty{background:var(--card);border:1px dashed var(--bd2);border-radius:var(--radius);padding:2rem;text-align:center;color:var(--muted)}
+  @media print{header{position:static} .flag{break-inside:avoid}}
 </style>
 </head>
 <body>
-<h1>Adonis — contradictions found</h1>
-<p class="meta">
-  {{ flags|length }} flags &middot; generated {{ generated_at }} &middot;
-  judge {{ judge_model }} (provider {{ judge_provider }}) &middot; prompt {{ judge_prompt_version }}
-  &middot; citation faithfulness {{ "%.0f%%"|format(faithfulness * 100) if faithfulness is not none else "n/a" }}
-</p>
-{% for f in flags %}
-<div class="flag">
-  <div class="conf">confidence {{ "%.2f"|format(f.final_confidence) }}</div>
-  <div class="label lbl-{{ f.final_label }}">{{ f.final_label }}</div>
-  <div class="side">
-    <div class="doc">
-      <a href="{{ f.doc_a_path | default("#", true) }}">{{ f.doc_a_title }}</a>
-      <span class="badge">span a: verbatim {{ "✓" if f.span_a_verbatim else "✗" }} &middot; fuzzy {{ "%.0f"|format(f.span_a_fuzzy) }} &middot; entail {{ "%.2f"|format(f.span_a_entailment) }}</span>
-    </div>
-    <div class="goal">&ldquo;{{ f.text_a }}&rdquo;</div>
-    <div class="span"><a href="{{ f.doc_a_path | default("#", true) }}">&ldquo;&hellip;{{ f.span_a }}&hellip;&rdquo;</a></div>
+<header>
+  <div class="mark">A</div>
+  <div><b>Adonis</b> <span style="color:var(--muted);font-weight:400">— contradictions found</span></div>
+  <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center">
+    <a href="/" style="font-size:.85rem">← Console</a>
+    <a href="/reports/eval.json" target="_blank" style="font-size:.85rem">eval.json</a>
   </div>
-  <div class="side">
-    <div class="doc">
-      <a href="{{ f.doc_b_path | default("#", true) }}">{{ f.doc_b_title }}</a>
-      <span class="badge">span b: verbatim {{ "✓" if f.span_b_verbatim else "✗" }} &middot; fuzzy {{ "%.0f"|format(f.span_b_fuzzy) }} &middot; entail {{ "%.2f"|format(f.span_b_entailment) }}</span>
-    </div>
-    <div class="goal">&ldquo;{{ f.text_b }}&rdquo;</div>
-    <div class="span"><a href="{{ f.doc_b_path | default("#", true) }}">&ldquo;&hellip;{{ f.span_b }}&hellip;&rdquo;</a></div>
+</header>
+<div class="wrap">
+  <p class="meta">
+    Generated {{ generated_at }} · judge <code>{{ judge_model }}</code> (provider {{ judge_provider }}) · prompt <code>{{ judge_prompt_version }}</code>
+    · citation faithfulness {% if faithfulness is not none %}<b>{{ "%.0f%%"|format(faithfulness * 100) }}</b>{% else %}n/a{% endif %}
+  </p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Flags</div><b>{{ flags|length }}</b></div>
+    <div class="kpi"><div class="lbl">Faithfulness</div><b>{% if faithfulness is not none %}{{ "%.0f%%"|format(faithfulness * 100) }}{% else %}—{% endif %}</b></div>
+    <div class="kpi"><div class="lbl">Judge</div><b style="font-size:.95rem">{{ judge_model }}</b><div style="font-size:.74rem;color:var(--muted)">{{ judge_provider }} · {{ judge_prompt_version }}</div></div>
+    <div class="kpi"><div class="lbl">Confidence</div><b>{% if flags %}{{ "%.2f"|format(flags[0].final_confidence) }} max{% else %}—{% endif %}</b></div>
   </div>
-  <div class="verify">judge={{ f.judge_model }} &middot; prompt={{ f.judge_prompt_version }}</div>
-  {% if f.reasoning %}
-  <details><summary>judge reasoning</summary><div class="reason">{{ f.reasoning }}</div></details>
-  {% endif %}
+
+  {% for f in flags %}
+  {% set cls = "gen" if f.final_label=="genuine_contradiction" else "sup" if f.final_label=="superseded_by_time" else "scope" if f.final_label=="different_scope" else "amb" %}
+  <div class="flag {{ cls }}">
+    <div class="topline">
+      <span class="label lbl-{{ f.final_label }}">{{ f.final_label }}</span>
+      <span class="badge" title="calibrated">{{ "%.0f%%"|format(f.final_confidence*100) }}</span>
+      <span class="bar" title="confidence {{ "%.2f"|format(f.final_confidence) }}"><span class="fill" style="width:{{ "%.0f"|format(f.final_confidence*100) }}%;background: {% if cls=="gen" %}var(--err){% elif cls=="sup" %}var(--warn){% elif cls=="scope" %}var(--info){% else %}var(--muted){% endif %}"></span></span>
+    </div>
+
+    <div class="side">
+      <div class="side-head">
+        <a class="doc" href="{{ f.doc_a_path | default("#", true) }}">{{ f.doc_a_title }}</a>
+        <span class="badge {{ "ok" if f.span_a_verbatim else "err" }}">verbatim {{ "✓" if f.span_a_verbatim else "✗" }}</span>
+        <span class="badge">fuzzy {{ "%.0f"|format(f.span_a_fuzzy) }}</span>
+        <span class="badge {{ "ok" if f.span_a_entailment>=0.8 else "err" }}">entail {{ "%.2f"|format(f.span_a_entailment) }}</span>
+      </div>
+      <div class="goal">&ldquo;{{ f.text_a }}&rdquo;</div>
+      <div class="span"><a href="{{ f.doc_a_path | default("#", true) }}" style="color:inherit">&ldquo;…{{ f.span_a }}…&rdquo;</a></div>
+    </div>
+
+    <div class="side">
+      <div class="side-head">
+        <a class="doc" href="{{ f.doc_b_path | default("#", true) }}">{{ f.doc_b_title }}</a>
+        <span class="badge {{ "ok" if f.span_b_verbatim else "err" }}">verbatim {{ "✓" if f.span_b_verbatim else "✗" }}</span>
+        <span class="badge">fuzzy {{ "%.0f"|format(f.span_b_fuzzy) }}</span>
+        <span class="badge {{ "ok" if f.span_b_entailment>=0.8 else "err" }}">entail {{ "%.2f"|format(f.span_b_entailment) }}</span>
+      </div>
+      <div class="goal">&ldquo;{{ f.text_b }}&rdquo;</div>
+      <div class="span"><a href="{{ f.doc_b_path | default("#", true) }}" style="color:inherit">&ldquo;…{{ f.span_b }}…&rdquo;</a></div>
+    </div>
+
+    <div class="verify">judge={{ f.judge_model }} · prompt={{ f.judge_prompt_version }} · {{ f.cited_span_a_start }}:{{ f.cited_span_a_end }} ↔ {{ f.cited_span_b_start }}:{{ f.cited_span_b_end }}</div>
+    {% if f.reasoning %}
+    <details><summary>judge reasoning</summary><div class="reason">{{ f.reasoning }}</div></details>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div style="font-size:2rem">⚑</div>
+    <b>No flags yet</b>
+    <div style="font-size:.9rem;margin-top:.3rem">Run <code>python scripts/run_pipeline.py</code> or use the console at <a href="/">/</a> → Pipeline.</div>
+    <div style="font-size:.82rem;margin-top:.4rem;color:var(--muted)">Flags only surface after verification passes (verbatim/fuzzy + entailment ≥ 0.8).</div>
+  </div>
+  {% endfor %}
+
+  <p class="meta" style="margin-top:1.2rem">Build: <code>python scripts/render_report.py</code> · <a href="/">Back to console</a></p>
 </div>
-{% else %}
-<p>No flags yet. Run <code>python scripts/run_pipeline.py</code> first.</p>
-{% endfor %}
 </body>
 </html>

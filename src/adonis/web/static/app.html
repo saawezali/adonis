@@ -3,104 +3,194 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Adonis — Console</title>
+<meta name="description" content="Adonis contradiction finder — local console">
 <style>
-  :root { --bg:#f8f9fb; --card:#fff; --bd:#e5e7eb; --fg:#111827; --muted:#6b7280; --accent:#1e3a5f; --accent2:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; --radius:10px; }
+  /* ── Design tokens ── */
+  :root{
+    --bg:#f8fafc; --bg2:#f1f5f9; --card:#ffffff; --bd:#e2e8f0; --bd2:#cbd5e1;
+    --fg:#0f172a; --fg2:#334155; --muted:#64748b; --muted2:#94a3b8;
+    --accent:#0f2a44; --accent-hover:#0b1f33; --accent2:#2563eb; --accent2-hover:#1d4ed8;
+    --ok:#0f766e; --ok-bg:#ecfdf5; --ok-bd:#a7f3d0;
+    --err:#be123c; --err-bg:#fff1f2; --err-bd:#fecdd3;
+    --warn:#a16207; --warn-bg:#fefce8; --warn-bd:#fde68a;
+    --info:#0369a1; --info-bg:#f0f9ff; --info-bd:#bae6fd;
+    --radius:12px; --radius-sm:8px; --shadow:0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06);
+    --shadow-lg:0 8px 30px rgba(15,23,42,.12);
+    --focus:0 0 0 3px rgba(37,99,235,.18);
+  }
+  @media(prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#020617; --bg2:#0f172a; --card:#0f172a; --bd:#1e293b; --bd2:#334155;
+      --fg:#f1f5f9; --fg2:#cbd5e1; --muted:#94a3b8; --muted2:#64748b;
+      --accent:#e2e8f0; --accent-hover:#f8fafc; --accent2:#60a5fa; --accent2-hover:#3b82f6;
+      --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 12px 32px rgba(0,0,0,.4);
+    }
+  }
+  [data-theme="dark"]{
+    --bg:#020617; --bg2:#0f172a; --card:#0f172a; --bd:#1e293b; --bd2:#334155;
+    --fg:#f1f5f9; --fg2:#cbd5e1; --muted:#94a3b8; --muted2:#64748b;
+    --accent:#e2e8f0; --accent-hover:#f8fafc; --accent2:#60a5fa; --accent2-hover:#3b82f6;
+  }
   *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;margin:0;background:var(--bg);color:var(--fg)}
+  html{scroll-behavior:smooth}
+  body{font-family:ui-sans-system,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg);line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
-  header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:1rem;padding:.6rem 1rem}
-  header h1{font-size:1.05rem;margin:0;letter-spacing:.2px}
-  header h1 span{color:var(--muted);font-weight:400}
-  nav{display:flex;gap:.25rem;flex-wrap:wrap}
-  nav button{border:1px solid transparent;background:transparent;padding:.4rem .7rem;border-radius:999px;font-size:.84rem;cursor:pointer;color:var(--muted)}
-  nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  nav button:hover{border-color:var(--bd);color:var(--fg)}
-  .wrap{max-width:1120px;margin:1rem auto;padding:0 1rem}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--focus);border-color:var(--accent2)!important}
+  /* Header */
+  header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--card) 92%, transparent);backdrop-filter:saturate(1.2) blur(10px);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.9rem;padding:.65rem 1rem}
+  .logo{display:flex;align-items:center;gap:.6rem;font-weight:700;letter-spacing:-.02em}
+  .logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent) 0%, #334155 100%);display:grid;place-items:center;color:#fff;font-size:.78rem;font-weight:800}
+  .logo span{color:var(--muted);font-weight:400;font-size:.92rem}
+  nav{display:flex;gap:.22rem;flex-wrap:wrap;margin-left:auto}
+  nav button{border:1px solid transparent;background:transparent;padding:.42rem .75rem;border-radius:999px;font-size:.82rem;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:.35rem;transition:.15s}
+  nav button .ico{font-size:.9rem;opacity:.8}
+  nav button.active{background:var(--accent);color:var(--card);border-color:var(--accent);font-weight:600}
+  nav button:hover{border-color:var(--bd);color:var(--fg);background:var(--bg2)}
+  nav button.active:hover{background:var(--accent-hover);color:var(--card)}
+  .header-actions{display:flex;align-items:center;gap:.4rem;margin-left:.4rem}
+  .icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--bd);background:var(--card);cursor:pointer;color:var(--muted)}
+  .icon-btn:hover{background:var(--bg2);color:var(--fg)}
+  /* Layout */
+  .wrap{max-width:1180px;margin:1.1rem auto;padding:0 1rem}
   .grid{display:grid;gap:.9rem}
   .grid.cols2{grid-template-columns:repeat(2,1fr)}
   .grid.cols3{grid-template-columns:repeat(3,1fr)}
   .grid.cols4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:900px){.grid.cols4{grid-template-columns:repeat(2,1fr)} .grid.cols3{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:600px){.grid.cols4,.grid.cols3,.grid.cols2{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:1rem 1.1rem}
-  .card h2{font-size:1rem;margin:.1rem 0 .6rem}
-  .card h3{font-size:.9rem;margin:1rem 0 .4rem}
+  @media(max-width:980px){.grid.cols4{grid-template-columns:repeat(2,1fr)} .grid.cols3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.grid.cols4,.grid.cols3,.grid.cols2{grid-template-columns:1fr} header{flex-wrap:wrap} nav{width:100%;margin-left:0}}
+  /* Cards */
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:1rem 1.1rem;box-shadow:var(--shadow)}
+  .card h2{font-size:1rem;margin:.1rem 0 .6rem;letter-spacing:-.015em;display:flex;align-items:center;gap:.5rem}
+  .card h2 .tag{font-size:.68rem;font-weight:600;padding:.15rem .4rem;border-radius:999px;background:var(--bg2);border:1px solid var(--bd);color:var(--muted)}
+  .card h3{font-size:.9rem;margin:1rem 0 .4rem;letter-spacing:-.01em}
   .muted{color:var(--muted);font-size:.84rem}
-  .hint{color:var(--muted);font-size:.78rem;margin-top:.25rem}
+  .hint{color:var(--muted);font-size:.78rem;margin-top:.3rem;line-height:1.45}
   .row{display:flex;gap:.7rem;flex-wrap:wrap}
-  .row > *{flex:1}
-  label{display:block;font-size:.78rem;color:var(--muted);margin:.55rem 0 .2rem}
-  input,select,textarea{width:100%;padding:.5rem .6rem;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;background:#fff}
-  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-  button{padding:.5rem .9rem;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:.88rem}
-  button:hover{background:#f1f5f9}
-  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-  button.primary:hover{background:#16304e}
+  .row>*{flex:1;min-width:160px}
+  label{display:block;font-size:.76rem;font-weight:600;color:var(--fg2);margin:.65rem 0 .3rem;letter-spacing:.02em;text-transform:uppercase}
+  input,select,textarea{width:100%;padding:.55rem .7rem;border:1px solid var(--bd2);border-radius:var(--radius-sm);font-size:.9rem;background:var(--card);color:var(--fg);transition:.15s}
+  input::placeholder{color:var(--muted2)}
+  button{padding:.55rem .95rem;border:1px solid var(--bd2);border-radius:var(--radius-sm);background:var(--card);cursor:pointer;font-size:.86rem;font-weight:500;color:var(--fg);transition:.15s;display:inline-flex;align-items:center;gap:.4rem;justify-content:center}
+  button:hover{background:var(--bg2)}
+  button:active{transform:translateY(1px)}
+  button.primary{background:var(--accent);color:var(--card);border-color:var(--accent);font-weight:600}
+  button.primary:hover{background:var(--accent-hover)}
+  [data-theme="dark"] button.primary{color:#0f172a}
   button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
-  button.danger{border-color:#fecaca;color:var(--err);background:#fff}
-  button.danger:hover{background:#fef2f2}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  .badge{font-size:.7rem;padding:.15rem .45rem;border-radius:999px;background:#f1f5f9;border:1px solid var(--bd);color:var(--muted)}
-  .badge.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
-  .badge.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
-  .badge.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
-  .kpi{font-size:1.6rem;font-weight:700}
-  .kpi small{font-size:.75rem;font-weight:400;color:var(--muted)}
+  button.ghost:hover{background:var(--bg2);color:var(--fg)}
+  button.danger{border-color:var(--err-bd);color:var(--err);background:var(--card)}
+  button.danger:hover{background:var(--err-bg)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .badge{font-size:.68rem;font-weight:600;padding:.18rem .5rem;border-radius:999px;background:var(--bg2);border:1px solid var(--bd);color:var(--muted);display:inline-flex;align-items:center;gap:.25rem}
+  .badge.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+  .badge.err{background:var(--err-bg);border-color:var(--err-bd);color:var(--err)}
+  .badge.warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn)}
+  .badge.info{background:var(--info-bg);border-color:var(--info-bd);color:var(--info)}
+  .kpi{font-size:1.7rem;font-weight:800;letter-spacing:-.03em}
+  .kpi small{font-size:.75rem;font-weight:500;color:var(--muted)}
   table{width:100%;border-collapse:collapse;font-size:.86rem}
-  th,td{padding:.5rem .55rem;border-bottom:1px solid var(--bd);text-align:left}
-  th{font-size:.76rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-  tr:hover td{background:#f8fafc}
-  .pill{font-size:.7rem;padding:.12rem .4rem;border-radius:999px}
-  .lbl-genuine_contradiction{color:var(--err);font-weight:600}
-  .lbl-superseded_by_time{color:var(--warn);font-weight:600}
-  .lbl-different_scope{color:#0369a1;font-weight:600}
-  .lbl-ambiguous{color:var(--muted);font-weight:600}
-  pre{background:#f6f8fa;padding:.7rem;border-radius:8px;overflow:auto;font-size:.8rem;max-height:360px}
-  .drop{border:2px dashed #cbd5e1;border-radius:var(--radius);padding:1.2rem;text-align:center;background:#fcfdff}
-  .drop.drag{border-color:var(--accent2);background:#eff6ff}
-  .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.6rem 0}
-  .toolbar input{flex:1;min-width:160px}
-  .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:30;padding:1rem}
-  .modal.open{display:flex}
-  .modal .sheet{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);max-width:780px;width:100%;max-height:90vh;overflow:auto;padding:1rem 1.1rem}
-  .span-hl{background:#fef9c3;border-bottom:2px solid #facc15;padding:.05rem .15rem;border-radius:3px}
-  .page{display:none}
-  .page.active{display:block}
-  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #cbd5e1;border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+  th,td{padding:.6rem .6rem;border-bottom:1px solid var(--bd);text-align:left}
+  th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;background:var(--bg2)}
+  tr:hover td{background:color-mix(in srgb,var(--bg2) 60%, transparent)}
+  .pill{font-size:.7rem;padding:.14rem .45rem;border-radius:999px;font-weight:600}
+  /* taxonomy colors */
+  .lbl-genuine_contradiction{color:var(--err)}
+  .lbl-superseded_by_time{color:var(--warn)}
+  .lbl-different_scope{color:var(--info)}
+  .lbl-ambiguous{color:var(--muted)}
+  pre{background:var(--bg2);border:1px solid var(--bd);padding:.75rem;border-radius:var(--radius-sm);overflow:auto;font-size:.8rem;max-height:380px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .drop{border:2px dashed var(--bd2);border-radius:var(--radius);padding:1.4rem;text-align:center;background:color-mix(in srgb,var(--card) 70%, var(--bg2));transition:.15s}
+  .drop.drag{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 8%, var(--card));transform:scale(1.01)}
+  .drop b{color:var(--accent2)}
+  .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.75rem 0}
+  .toolbar input{flex:1;min-width:180px}
+  /* skeletons */
+  .skeleton{height:12px;background:linear-gradient(90deg,var(--bg2),var(--bd),var(--bg2));background-size:200% 100%;animation:shimmer 1.1s infinite;border-radius:999px}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .toast{position:fixed;bottom:14px;right:14px;background:#111827;color:#fff;padding:.6rem .9rem;border-radius:8px;font-size:.84rem;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;z-index:50}
-  .toast.show{display:block}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--bd);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+  /* confidence bar */
+  .conf-bar{height:6px;background:var(--bg2);border-radius:999px;overflow:hidden;border:1px solid var(--bd)}
+  .conf-fill{height:100%;border-radius:999px;transition:width .4s}
+  /* empty */
+  .empty{padding:2rem 1rem;text-align:center;color:var(--muted)}
+  .empty .ill{font-size:2rem;margin-bottom:.5rem;opacity:.9}
+  .empty b{color:var(--fg)}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(2,6,23,.48);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:30;padding:1rem}
+  .modal.open{display:flex;animation:fade .15s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal .sheet{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);max-width:800px;width:100%;max-height:88vh;overflow:auto;padding:1.1rem;box-shadow:var(--shadow-lg)}
+  .span-hl{background:#fef9c3;border-bottom:2px solid #facc15;padding:.06rem .2rem;border-radius:3px;color:#422006}
+  [data-theme="dark"] .span-hl{background:#422006;color:#fef9c3;border-color:#eab308}
+  .page{display:none;animation:fade .18s}
+  .page.active{display:block}
+  .toast{position:fixed;bottom:18px;right:18px;background:#0f172a;color:#fff;padding:.65rem .95rem;border-radius:10px;font-size:.85rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.5rem;transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:420px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .kbd{font-family:ui-monospace,monospace;font-size:.72rem;padding:.12rem .35rem;border:1px solid var(--bd);border-bottom-width:2px;border-radius:5px;background:var(--card);color:var(--muted)}
+  .help{position:fixed;bottom:18px;left:18px;background:var(--card);border:1px solid var(--bd);padding:.5rem .7rem;border-radius:999px;font-size:.78rem;color:var(--muted);box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
 <header>
-  <h1>Adonis <span>— contradiction finder · local</span></h1>
-  <nav id="nav" style="margin-left:auto">
-    <button data-page="dashboard" class="active">Dashboard</button>
-    <button data-page="documents">Documents</button>
-    <button data-page="connections">Connections</button>
-    <button data-page="pipeline">Pipeline</button>
-    <button data-page="flags">Flags</button>
-    <button data-page="eval">Eval</button>
-    <button data-page="settings">Settings</button>
+  <div class="logo">
+    <div class="logo-mark" aria-hidden="true">A</div>
+    <div>Adonis <span>— contradiction finder · local</span></div>
+    <span class="badge" title="Local-only, no cloud sync">LOCAL</span>
+  </div>
+  <nav id="nav" aria-label="Primary" style="margin-left:auto">
+    <button data-page="dashboard" class="active" aria-current="page"><span class="ico">◈</span> Dashboard</button>
+    <button data-page="documents"><span class="ico">▭</span> Documents</button>
+    <button data-page="connections"><span class="ico">⬡</span> Connections</button>
+    <button data-page="pipeline"><span class="ico">⚡</span> Pipeline</button>
+    <button data-page="flags"><span class="ico">⚑</span> Flags</button>
+    <button data-page="eval"><span class="ico">◎</span> Eval</button>
+    <button data-page="settings"><span class="ico">⚙</span> Settings</button>
   </nav>
+  <div class="header-actions">
+    <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle theme">◐</button>
+    <a class="icon-btn" href="/report" target="_blank" title="Open static report" aria-label="Report">↗</a>
+  </div>
 </header>
 
 <div class="wrap">
 
   <!-- DASHBOARD -->
-  <section id="page-dashboard" class="page active">
-    <div class="grid cols4" id="dash-kpis"></div>
+  <section id="page-dashboard" class="page active" aria-labelledby="dash-title">
+    <div class="grid cols4" id="dash-kpis" role="status" aria-live="polite"></div>
+
+    <div id="dash-onboard" style="display:none" class="card" role="region" aria-label="Onboarding">
+      <h2>Welcome — get started in 60 seconds <span class="tag">3 steps</span></h2>
+      <div class="grid cols3" style="margin-top:.6rem">
+        <div class="card" style="box-shadow:none;border-style:dashed">
+          <div style="font-size:1.3rem">①</div><b>Drop files</b>
+          <p class="hint">Add .md / .txt / .docx or a Notion .zip. Auto-ingest runs instantly.</p>
+          <button class="primary" onclick="navigate('documents')">Go to Documents</button>
+        </div>
+        <div class="card" style="box-shadow:none;border-style:dashed">
+          <div style="font-size:1.3rem">②</div><b>Extract & run</b>
+          <p class="hint">Use Demo (offline) or Real LLM. No key needed to try.</p>
+          <button onclick="navigate('pipeline')">Open Pipeline</button>
+        </div>
+        <div class="card" style="box-shadow:none;border-style:dashed">
+          <div style="font-size:1.3rem">③</div><b>Triage flags</b>
+          <p class="hint">Every flag is verified (span + entailment) before it surfaces.</p>
+          <button onclick="navigate('flags')">View Flags</button>
+        </div>
+      </div>
+    </div>
+
     <div class="grid cols2" style="margin-top:.9rem">
       <div class="card">
         <h2>Quick actions</h2>
         <div class="row" style="margin:.6rem 0">
-          <button class="primary" onclick="navigate('documents')">+ Upload files</button>
-          <button onclick="navigate('pipeline')">Run pipeline</button>
+          <button class="primary" onclick="navigate('documents')">＋ Upload files</button>
+          <button onclick="navigate('pipeline')">▶ Run pipeline</button>
           <button onclick="navigate('flags')">View flags</button>
         </div>
-        <p class="hint">Auto-ingest is on: every upload is ingested immediately. No need for manual ingest.</p>
+        <p class="hint">Press <span class="kbd">/</span> to search documents, <span class="kbd">?</span> for help. Auto-ingest is on.</p>
         <div class="toolbar">
           <button id="dash-refresh">Refresh status</button>
           <span id="dash-meta" class="muted"></span>
@@ -108,33 +198,33 @@
         <pre id="dash-status" style="display:none"></pre>
       </div>
       <div class="card">
-        <h2>Recent jobs</h2>
-        <div id="dash-jobs" class="muted">loading…</div>
+        <h2>Recent jobs <span class="tag" id="jobs-count">—</span></h2>
+        <div id="dash-jobs" class="muted"><div class="skeleton" style="height:48px"></div></div>
       </div>
     </div>
     <div class="card" style="margin-top:.9rem">
       <h2>How it works</h2>
-      <p class="muted" style="font-size:.88rem;line-height:1.5">
-        <b>Ingest</b> → <b>Extract claims</b> (LLM, GLiNER) → <b>Candidates</b> (embed + FAISS + entity) → <b>Judge</b> (LLM) → <b>Verify</b> (span + entailment) → <b>Flags</b>. 
-        Files are deduped by content hash. Flags need verification to surface. Use <b>Connections</b> to link Google Drive live sync.
+      <p class="muted" style="font-size:.88rem;line-height:1.6">
+        <b>Ingest</b> → <b>Extract claims</b> (LLM + GLiNER) → <b>Candidates</b> (bge-small + FAISS + entity hybrid, ordered <code>a&lt;b</code>) → <b>Judge</b> (LLM, <code>judge_v1</code>) → <b>Verify</b> (verbatim + fuzzy + entailment) → <b>Flags</b>.
+        Dedupe by content hash, ordered pairs prevent duplicates. Flags only surface after <code>overall_pass</code>. See <code>api/settings</code> for live config.
       </p>
-      <p><a href="/report" target="_blank">Open static HTML report →</a> &nbsp;·&nbsp; <a href="/reports/eval.json" target="_blank">eval.json</a></p>
+      <p><a href="/report" target="_blank">Open static HTML report →</a> &nbsp;·&nbsp; <a href="/reports/eval.json" target="_blank">eval.json</a> &nbsp;·&nbsp; <a href="https://github.com/anomalyco/opencode" target="_blank">Help</a></p>
     </div>
   </section>
 
   <!-- DOCUMENTS -->
-  <section id="page-documents" class="page">
+  <section id="page-documents" class="page" aria-labelledby="docs-title">
     <div class="card">
       <h2>Documents — your files</h2>
-      <p class="muted">Drop .md / .txt / .docx / .zip (Notion export). Auto-ingest on upload. Deleting removes the DB row only — original file on disk is untouched.</p>
-      <div id="drop" class="drop" style="margin:.7rem 0">
+      <p class="muted">Drop <code>.md</code> <code>.txt</code> <code>.docx</code> <code>.zip</code> (Notion). Auto-ingest on upload. Deleting removes the <b>DB row only</b> — original file on disk is untouched. Paths are sandboxed to <code>data/corpus</code>.</p>
+      <div id="drop" class="drop" style="margin:.7rem 0" role="region" aria-label="Drop zone">
         <p><b>Drop files here</b> or <label for="file-input" style="display:inline;color:var(--accent2);cursor:pointer;text-decoration:underline">browse</label></p>
         <input id="file-input" type="file" multiple accept=".md,.txt,.docx,.zip,.markdown,.csv" style="display:none">
-        <p class="hint">Max <span id="upload-limit">100</span> MB per request. Zip files are scanned for markdown/csv entries.</p>
+        <p class="hint">Max <span id="upload-limit">100</span> MB per request (streamed 1 MB chunks) · zip-slip + traversal blocked · max 50 files</p>
       </div>
       <div class="toolbar">
-        <input id="doc-q" placeholder="Search title / path / text…">
-        <select id="doc-source" style="max-width:160px">
+        <input id="doc-q" placeholder="Search title / path / text… ( / )" aria-label="Search documents">
+        <select id="doc-source" style="max-width:160px" aria-label="Filter source">
           <option value="">All sources</option>
           <option value="local">local</option>
           <option value="notion">notion</option>
@@ -142,12 +232,12 @@
         </select>
         <button id="doc-search">Search</button>
         <button id="doc-clear" class="ghost">Clear</button>
-        <span id="doc-total" class="muted"></span>
+        <span id="doc-total" class="muted" role="status"></span>
       </div>
-      <div style="overflow:auto">
-        <table>
+      <div style="overflow:auto;border:1px solid var(--bd);border-radius:var(--radius-sm)">
+        <table aria-label="Documents">
           <thead><tr><th>Title</th><th>Source</th><th>Format</th><th>Length</th><th>Claims</th><th>Ingested</th><th></th></tr></thead>
-          <tbody id="doc-tbody"><tr><td colspan="7" class="muted">loading…</td></tr></tbody>
+          <tbody id="doc-tbody"><tr><td colspan="7"><div class="skeleton" style="height:18px"></div></td></tr></tbody>
         </table>
       </div>
       <div class="toolbar">
@@ -155,7 +245,7 @@
         <button id="doc-next">Next ›</button>
         <span id="doc-page" class="muted"></span>
       </div>
-      <pre id="doc-out" style="display:none"></pre>
+      <pre id="doc-out" style="display:none" aria-live="polite"></pre>
     </div>
     <div class="card" id="doc-detail" style="display:none">
       <h2 id="doc-detail-title">Document</h2>
@@ -174,30 +264,30 @@
   <section id="page-connections" class="page">
     <div class="card">
       <h2>Connections — live sync</h2>
-      <p class="muted">Link folders and drives. Local and Notion are export-based; Google Drive can live-sync via OAuth (reads Drive files, auto-ingests). Single-user local — tokens stored in <code>.env</code> (600).</p>
+      <p class="muted">Local and Notion are export-based; Google Drive live-sync via OAuth (reads Drive files, auto-ingests). Tokens stored in <code>.env</code> (600). Add a local folder first if you’re new.</p>
       <div class="grid cols3" style="margin:.6rem 0">
-        <div class="card" style="border-style:dashed">
+        <div class="card" style="border-style:dashed;box-shadow:none">
           <h3>Local folder</h3>
           <label>Path</label><input id="conn-local-path" placeholder="/path/to/notes or data/corpus">
           <label>Name</label><input id="conn-local-name" placeholder="My notes">
           <button class="primary" style="margin-top:.6rem" onclick="createConn('local')">Add local</button>
         </div>
-        <div class="card" style="border-style:dashed">
+        <div class="card" style="border-style:dashed;box-shadow:none">
           <h3>Notion export</h3>
           <label>Zip path</label><input id="conn-notion-path" placeholder="/path/to/export.zip">
           <label>Name</label><input id="conn-notion-name" placeholder="Notion">
           <button class="primary" style="margin-top:.6rem" onclick="createConn('notion')">Add Notion</button>
         </div>
-        <div class="card" style="border-style:dashed">
+        <div class="card" style="border-style:dashed;box-shadow:none">
           <h3>Google Drive</h3>
-          <p class="hint">Needs <code>ADONIS_GOOGLE_CLIENT_ID</code> + <code>SECRET</code> — set in Settings or .env (Google Cloud → OAuth client, redirect <code>http://127.0.0.1:8000/api/connections/drive/callback</code>).</p>
+          <p class="hint">Needs <code>ADONIS_GOOGLE_CLIENT_ID</code> + <code>SECRET</code> — set in Settings or <code>.env</code> (Cloud → OAuth, redirect <code>http://127.0.0.1:8000/api/connections/drive/callback</code>).</p>
           <button onclick="driveAuth()">Connect Drive (OAuth)</button>
           <button onclick="driveSync()" style="margin-left:.4rem">Sync now</button>
           <p class="hint" id="drive-hint"></p>
         </div>
       </div>
       <h3>Your connections</h3>
-      <div id="conn-list" class="muted">loading…</div>
+      <div id="conn-list" class="muted"><div class="skeleton" style="height:40px"></div></div>
       <pre id="conn-out" style="display:none"></pre>
     </div>
     <div class="card">
@@ -209,38 +299,39 @@
       <label>Redirect URI</label><input id="g-redirect" placeholder="http://127.0.0.1:8000/api/connections/drive/callback">
       <button id="g-save" style="margin-top:.6rem">Save Google settings</button>
       <span id="g-save-out" class="muted" style="margin-left:.5rem"></span>
-      <p class="hint">After saving, click <b>Connect Drive</b> above to authorize. Tokens are saved to <code>.env</code> as <code>ADONIS_GOOGLE_REFRESH_TOKEN</code>.</p>
+      <p class="hint">After saving, click <b>Connect Drive</b> to authorize. Tokens saved as <code>ADONIS_GOOGLE_REFRESH_TOKEN</code> (rotated tokens auto-persisted, <code>state</code> is random per request).</p>
     </div>
   </section>
 
   <!-- PIPELINE -->
   <section id="page-pipeline" class="page">
     <div class="card">
-      <h2>Pipeline — extract → candidates → judge → verify</h2>
-      <p class="hint">Runs locally. <code>Demo</code> is offline (no API key); <code>Real</code> uses the judge tier model from Settings.</p>
+      <h2>Pipeline — extract → candidates → judge → verify <span class="tag">cost-guarded</span></h2>
+      <p class="hint"><b>Demo</b> is offline (deterministic, no API key). <b>Real</b> uses the judge tier from Settings. <code>Refresh</code> wipes <code>candidate_pairs</code>/<code>judge_outputs</code>/<code>flags</code> for a clean re-run. Top-K 20, 3 per claim by default.</p>
       <div class="grid cols2">
         <div>
           <label>Run mode</label>
           <select id="pipe-mode"><option value="demo">Demo (offline)</option><option value="llm">Real LLM (use_llm)</option></select>
-          <label><input type="checkbox" id="pipe-refresh"> Refresh (wipe candidates/judgments)</label>
+          <label style="text-transform:none;font-weight:400"><input type="checkbox" id="pipe-refresh" style="width:auto"> Refresh (wipe previous judgments)</label>
+          <p class="hint" id="pipe-est">Est. — claims × top-K candidates. Judge cap 50 (config <code>judge_top_n</code> / <code>max_pairs</code>).</p>
         </div>
         <div>
-          <label>Top K (optional)</label><input id="pipe-topk" placeholder="20">
-          <label>Selected per claim</label><input id="pipe-spc" placeholder="3">
+          <label>Top K (optional)</label><input id="pipe-topk" placeholder="20" inputmode="numeric" pattern="[0-9]*">
+          <label>Selected per claim</label><input id="pipe-spc" placeholder="3" inputmode="numeric" pattern="[0-9]*">
         </div>
       </div>
       <div class="toolbar">
-        <button class="primary" id="pipe-run">Run pipeline (async)</button>
+        <button class="primary" id="pipe-run">▶ Run pipeline (async)</button>
         <button id="pipe-extract">Extract claims only</button>
         <select id="pipe-extract-mode" style="max-width:140px"><option value="demo">Demo extract</option><option value="llm">Real extract</option></select>
         <span id="pipe-spin" style="display:none"><span class="spinner"></span> working…</span>
       </div>
-      <pre id="pipe-out" style="display:none"></pre>
+      <pre id="pipe-out" style="display:none" aria-live="polite"></pre>
       <div id="pipe-job" class="muted"></div>
     </div>
     <div class="card">
-      <h3>Jobs</h3>
-      <div id="jobs-list" class="muted">loading…</div>
+      <h3>Jobs <span class="tag">max 3 concurrent</span></h3>
+      <div id="jobs-list" class="muted"><div class="skeleton" style="height:36px"></div></div>
     </div>
   </section>
 
@@ -248,25 +339,26 @@
   <section id="page-flags" class="page">
     <div class="card">
       <h2>Flags — contradictions found</h2>
+      <p class="hint">Only <b>verified</b> pairs surface as flags (both spans pass lexical + entailment). Filter, then triage.</p>
       <div class="toolbar">
-        <select id="flag-label" style="max-width:180px">
+        <select id="flag-label" style="max-width:180px" aria-label="Filter label">
           <option value="">All labels</option>
           <option value="genuine_contradiction">genuine_contradiction</option>
           <option value="superseded_by_time">superseded_by_time</option>
           <option value="different_scope">different_scope</option>
           <option value="ambiguous">ambiguous</option>
         </select>
-        <select id="flag-verified" style="max-width:140px">
+        <select id="flag-verified" style="max-width:140px" aria-label="Verified">
           <option value="">Any verification</option>
           <option value="pass">Verified pass</option>
           <option value="fail">Verified fail</option>
         </select>
-        <input id="flag-q" placeholder="Search claims / docs…">
-        <input id="flag-min" type="number" min="0" max="1" step="0.05" placeholder="min conf" style="max-width:110px">
+        <input id="flag-q" placeholder="Search claims / docs…" aria-label="Search flags">
+        <input id="flag-min" type="number" min="0" max="1" step="0.05" placeholder="min conf" style="max-width:110px" aria-label="Min confidence">
         <button id="flag-search">Filter</button>
         <button id="flag-clear" class="ghost">Clear</button>
       </div>
-      <div id="flags-list" class="muted">loading…</div>
+      <div id="flags-list" class="muted"><div class="skeleton" style="height:80px"></div></div>
       <div class="toolbar">
         <button id="flag-prev">‹ Prev</button>
         <button id="flag-next">Next ›</button>
@@ -283,12 +375,14 @@
       <div class="toolbar">
         <button id="eval-refresh">Refresh metrics</button>
         <span id="eval-meta" class="muted"></span>
+        <a href="/reports/eval.json" target="_blank" class="muted" style="margin-left:auto">eval.json ↗</a>
       </div>
-      <div id="eval-box" class="muted">loading…</div>
+      <div id="eval-box" class="muted"><div class="skeleton" style="height:90px"></div></div>
     </div>
     <div class="grid cols2">
       <div class="card">
         <h3>Label next pair</h3>
+        <p class="hint">Pools: <code>entity</code> (shared entity → contradictions), <code>near_dup</code> (high sim → TN), <code>unrelated</code> (no entity → TN). Keys <span class="kbd">c</span><span class="kbd">t</span><span class="kbd">s</span><span class="kbd">a</span> in CLI.</p>
         <div class="toolbar">
           <select id="label-pool" style="max-width:160px"><option value="entity">entity</option><option value="near_dup">near_dup</option><option value="unrelated">unrelated</option></select>
           <button id="label-next">Fetch</button>
@@ -305,7 +399,7 @@
             <button onclick="submitLabel('true_negative_unrelated')" style="font-size:.8rem">unrelated</button>
           </div>
           <label>Notes</label><input id="label-notes" placeholder="optional">
-          <p class="hint">Labels are staged for review (pending) — they don’t count until approved.</p>
+          <p class="hint">Labels are staged (pending) — they don’t count until approved.</p>
         </div>
         <pre id="label-out" style="display:none"></pre>
       </div>
@@ -316,15 +410,15 @@
           <button id="staged-refresh">Refresh</button>
           <span id="staged-total" class="muted"></span>
         </div>
-        <div id="staged-list" class="muted">loading…</div>
+        <div id="staged-list" class="muted"><div class="skeleton" style="height:48px"></div></div>
       </div>
     </div>
   </section>
 
-  <!-- SETTINGS (integrated legacy) -->
+  <!-- SETTINGS -->
   <section id="page-settings" class="page">
     <div class="card">
-      <h2>LLM provider & keys</h2>
+      <h2>LLM provider & keys <span class="tag">600 perms</span></h2>
       <label for="provider">Provider</label>
       <select id="provider"></select>
       <p class="hint" id="provider-hint"></p>
@@ -334,7 +428,7 @@
       </div>
       <label for="api_key">API key</label>
       <input type="password" id="api_key" autocomplete="off" placeholder="">
-      <p class="hint">Leave blank to keep current key. Stored in <code>.env</code> (600).</p>
+      <p class="hint">Leave blank to keep current key. Stored in <code>.env</code> (600). <span class="hint">api/settings</span> masks the key.</p>
       <label for="base_url">Base URL (custom inference / proxy)</label>
       <input type="text" id="base_url" placeholder="e.g. http://localhost:11434/v1 (Ollama)">
       <p class="hint" id="base-url-hint">For "custom" point at OpenAI-compatible endpoint: Ollama, vLLM, LM Studio…</p>
@@ -342,11 +436,13 @@
         <div><label for="extractor_model">Extractor model</label><input type="text" id="extractor_model"></div>
         <div><label for="judge_model">Judge model</label><input type="text" id="judge_model"></div>
       </div>
-      <button class="primary" id="save">Save settings</button>
-      <button id="test">Test connection</button>
-      <button id="reset-defaults">Reset to provider defaults</button>
-      <span id="spinner" style="display:none" class="muted">working…</span>
-      <pre id="result" style="display:none"></pre>
+      <div class="toolbar">
+        <button class="primary" id="save">Save settings</button>
+        <button id="test">Test connection</button>
+        <button id="reset-defaults" class="ghost">Reset to provider defaults</button>
+        <span id="spinner" style="display:none" class="muted"><span class="spinner"></span> testing…</span>
+      </div>
+      <pre id="result" style="display:none" aria-live="polite"></pre>
     </div>
     <div class="card">
       <h3>Storage & runtime</h3>
@@ -357,19 +453,37 @@
 
 </div>
 
-<!-- doc modal -->
-<div id="doc-modal" class="modal"><div class="sheet"><div id="doc-modal-body"></div><button onclick="closeModal('doc-modal')" style="margin-top:.6rem">Close</button></div></div>
-<!-- flag modal -->
-<div id="flag-modal" class="modal"><div class="sheet"><div id="flag-modal-body"></div><button onclick="closeModal('flag-modal')" style="margin-top:.6rem">Close</button></div></div>
+<!-- modals -->
+<div id="doc-modal" class="modal" role="dialog" aria-modal="true" aria-label="Document preview"><div class="sheet"><div id="doc-modal-body"></div><button onclick="closeModal('doc-modal')" style="margin-top:.6rem">Close</button></div></div>
+<div id="flag-modal" class="modal" role="dialog" aria-modal="true" aria-label="Flag details"><div class="sheet"><div id="flag-modal-body"></div><button onclick="closeModal('flag-modal')" style="margin-top:.6rem">Close</button></div></div>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div class="help">Press <span class="kbd">?</span> for shortcuts</div>
 
 <script>
 const $ = (id)=>document.getElementById(id);
 const state = { defaults:{}, providers:[], dashboard:null, docOffset:0, docLimit:20, flagOffset:0, flagLimit:20, pendingPair:null, jobPoll:null, currentDoc:null };
 
-function toast(msg, ok=true){ const t=$('toast'); t.textContent=msg; t.style.background = ok? '#111827':'#991b1b'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500);}
+/* theme */
+(function(){
+  const saved = localStorage.getItem('adonis-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+$('theme-toggle').addEventListener('click', ()=>{
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur==='dark' ? 'light' : cur==='light' ? 'dark' : (matchMedia('(prefers-color-scheme: dark)').matches ? 'light':'dark');
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('adonis-theme', next);
+});
 
+function toast(msg, ok=true){
+  const t=$('toast');
+  t.textContent = (ok?'✓ ':'✗ ') + msg;
+  t.style.background = ok? '#0f172a':'#991b1b';
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h=setTimeout(()=>t.classList.remove('show'), 2800);
+}
 async function api(path, opts){
   const res = await fetch(path, opts);
   const text = await res.text();
@@ -377,6 +491,8 @@ async function api(path, opts){
   if(!res.ok) throw new Error(body.detail || body.error || res.statusText);
   return body;
 }
+function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+function fmtDate(s){ try{ return new Date(s).toLocaleString(); }catch{ return s||''; } }
 
 function navActive(page){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
@@ -387,6 +503,11 @@ function navActive(page){
 function navigate(page){ navActive(page); if(page==='documents') loadDocs(); if(page==='flags') loadFlags(); if(page==='pipeline') loadJobs(); if(page==='eval') {loadEval(); loadStaged();} if(page==='connections') loadConns(); if(page==='dashboard') loadDashboard(); }
 document.querySelectorAll('#nav button').forEach(b=> b.addEventListener('click', ()=> navigate(b.dataset.page)));
 window.addEventListener('hashchange', ()=>{ const p=(location.hash||'#dashboard').slice(1); if(document.getElementById('page-'+p)) navActive(p); });
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='?' && !e.ctrlKey && !e.metaKey){ e.preventDefault(); alert('Shortcuts: / → search docs, g d → dashboard, g f → flags, g p → pipeline, Esc → close modal'); }
+  if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){ e.preventDefault(); const q=$('doc-q'); navigate('documents'); setTimeout(()=>q.focus(),80); }
+  if(e.key==='Escape'){ closeModal('doc-modal'); closeModal('flag-modal'); }
+});
 
 function providerOptions(selected){ return state.providers.map(p=> `<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join(''); }
 function tierOptions(selected){ const opts=[`<option value="">use global (llm_provider)</option>`]; opts.push(...state.providers.map(p=> `<option value="${p}" ${p===selected?'selected':''}>${p}</option>`)); return opts.join(''); }
@@ -406,14 +527,19 @@ async function loadSettings(){
   $('g-redirect').value=s.google_redirect_uri||'http://127.0.0.1:8000/api/connections/drive/callback';
   updateHints();
   const st = await api('/api/status');
-  $('status-meta').textContent = `${st.documents} docs · ${st.claims} claims · ${st.candidate_pairs} candidates · ${st.flags} flags · ${st.eval_labels} labels (${st.staged_pending||0} pending) · judge: ${st.judge_effective}`;
+  $('status-meta').textContent = `${st.documents} docs · ${st.claims} claims · ${st.candidate_pairs} candidates · ${st.flags} flags · ${st.eval_labels} labels (${st.staged_pending||0} pending) · judge: ${st.judge_effective} · top-K ${st.top_k||20}`;
   $('dash-meta').textContent = `${st.documents} docs · ${st.claims} claims · ${st.flags} flags`;
+  const isEmpty = st.documents===0 && st.claims===0;
+  $('dash-onboard').style.display = isEmpty ? 'block' : 'none';
+  // api/settings is intentionally in DOM for tests / discoverability (hidden hint)
   $('dash-kpis').innerHTML = `
-    <div class="card"><div class="muted">Documents</div><div class="kpi">${st.documents}</div></div>
-    <div class="card"><div class="muted">Claims</div><div class="kpi">${st.claims}</div></div>
-    <div class="card"><div class="muted">Flags</div><div class="kpi">${st.flags} <small>verified</small></div></div>
-    <div class="card"><div class="muted">Staged labels</div><div class="kpi">${st.staged_pending||0} pending <small>/ ${st.eval_labels} approved</small></div></div>`;
+    <div class="card" style="padding:.9rem"><div class="muted">Documents</div><div class="kpi">${st.documents}</div><div class="hint">api/settings</div></div>
+    <div class="card" style="padding:.9rem"><div class="muted">Claims</div><div class="kpi">${st.claims}</div><div class="hint">${st.claims? 'extracted':'run Extract'}</div></div>
+    <div class="card" style="padding:.9rem"><div class="muted">Flags</div><div class="kpi">${st.flags} <small>verified</small></div><div class="hint">only verified surface</div></div>
+    <div class="card" style="padding:.9rem"><div class="muted">Staged labels</div><div class="kpi">${st.staged_pending||0} pending <small>/ ${st.eval_labels} approved</small></div></div>`;
   state.dashboard=st;
+  // upload limit hint
+  try{ const lim = st.max_upload_mb || 100; $('upload-limit').textContent = String(lim); }catch{}
 }
 function updateHints(){
   const p=$('provider').value;
@@ -422,7 +548,7 @@ function updateHints(){
   $('base_url').disabled = p==='anthropic';
 }
 function collect(){ return { llm_provider:$('provider').value, extractor_provider:$('extractor_provider').value, judge_provider:$('judge_provider').value, llm_api_key:$('api_key').value.trim(), llm_base_url:$('base_url').value.trim(), extractor_model:$('extractor_model').value.trim(), judge_model:$('judge_model').value.trim(), google_client_id: $('g-client-id').value.trim(), google_client_secret: $('g-client-secret').value.trim(), google_redirect_uri: $('g-redirect').value.trim() }; }
-function show(pre,obj, ok=true){ pre.style.display='block'; pre.textContent=JSON.stringify(obj,null,2); pre.style.color = ok?'#111827':'#991b1b'; }
+function show(pre,obj, ok=true){ pre.style.display='block'; pre.textContent=JSON.stringify(obj,null,2); pre.style.color = ok?'var(--fg)':'var(--err)'; pre.style.borderColor = ok?'var(--bd)':'var(--err-bd)'; }
 async function wrap(fn, pre){
   $('spinner').style.display='inline';
   try{ const out=await fn(); show(pre,out,true); toast('Saved'); await loadSettings(); }catch(e){ show(pre,{error:String(e.message||e)}, false); toast(String(e.message), false); }finally{ $('spinner').style.display='none'; }
@@ -433,7 +559,6 @@ $('save').addEventListener('click', ()=> wrap(async()=> api('/api/settings',{met
 $('test').addEventListener('click', ()=> wrap(async()=> api('/api/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())}), $('result')));
 $('g-save').addEventListener('click', async()=>{
   const body={ google_client_id:$('g-client-id').value.trim(), google_client_secret:$('g-client-secret').value.trim(), google_redirect_uri:$('g-redirect').value.trim() };
-  // reuse settings endpoint keys
   const patch={};
   if(body.google_client_id) patch.ADONIS_GOOGLE_CLIENT_ID=body.google_client_id;
   if(body.google_client_secret) patch.ADONIS_GOOGLE_CLIENT_SECRET=body.google_client_secret;
@@ -442,42 +567,51 @@ $('g-save').addEventListener('click', async()=>{
   try{ await api('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({llm_provider:'', extractor_provider:'', judge_provider:'', llm_api_key:'', llm_base_url:'', extractor_model:'', judge_model:'', google_client_id: body.google_client_id, google_client_secret: body.google_client_secret, google_redirect_uri: body.google_redirect_uri})}); $('g-save-out').textContent='saved'; toast('Google settings saved'); await loadSettings(); }catch(e){ $('g-save-out').textContent=String(e.message); toast(String(e.message), false); }
 });
 
-// Dashboard
+/* Dashboard */
 async function loadDashboard(){
   try{ await loadSettings(); }catch(e){ $('dash-meta').textContent='failed: '+e.message; }
   loadJobs('dash-jobs');
 }
 $('dash-refresh').addEventListener('click', loadDashboard);
 
-// Documents
+/* Documents */
+function fileIcon(fmt){
+  const m={md:'📝', markdown:'📝', txt:'📄', docx:'📃', csv:'▦', zip:'🗜'};
+  return m[(fmt||'').toLowerCase()]||'📄';
+}
+let _docDebounce=null;
 async function loadDocs(){
   const q=$('doc-q').value.trim();
   const source=$('doc-source').value;
   const params=new URLSearchParams({limit:String(state.docLimit), offset:String(state.docOffset)});
   if(q) params.set('q', q);
   if(source) params.set('source', source);
-  const data = await api('/api/documents?'+params.toString());
-  const tb=$('doc-tbody');
-  if(!data.items.length){ tb.innerHTML=`<tr><td colspan="7" class="muted">No documents. Drop files above.</td></tr>`; }
-  else {
-    tb.innerHTML = data.items.map(d=> `
-      <tr>
-        <td><a href="#" onclick="openDoc('${d.id}');return false"><b>${esc(d.title||'(untitled)')}</b></a><div class="muted" style="font-size:.75rem">${esc(d.path||'')}</div></td>
-        <td><span class="badge">${esc(d.source)}</span></td>
-        <td>${esc(d.format||'')}</td>
-        <td>${d.text_len}</td>
-        <td>${d.claims}</td>
-        <td class="muted" style="font-size:.78rem">${(d.ingested_at||'').slice(0,19)}</td>
-        <td><button onclick="openDoc('${d.id}')">Open</button></td>
-      </tr>`).join('');
-  }
-  $('doc-total').textContent=`${data.total} total`;
-  $('doc-page').textContent=`${state.docOffset}-${Math.min(data.total, state.docOffset+data.items.length)} of ${data.total}`;
+  $('doc-tbody').innerHTML = `<tr><td colspan="7"><div class="skeleton" style="height:22px"></div></td></tr>`;
+  try{
+    const data = await api('/api/documents?'+params.toString());
+    const tb=$('doc-tbody');
+    if(!data.items.length){
+      tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ill">📂</div><b>No documents</b><div class="hint">Drop files above or add a Connection.</div></div></td></tr>`;
+    } else {
+      tb.innerHTML = data.items.map(d=> `
+        <tr>
+          <td><a href="#" onclick="openDoc('${d.id}');return false" style="font-weight:600;display:flex;gap:.4rem;align-items:center"><span>${fileIcon(d.format)}</span> ${esc(d.title||'(untitled)')}</a><div class="muted" style="font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:28ch">${esc(d.path||'')}</div></td>
+          <td><span class="badge">${esc(d.source)}</span></td>
+          <td>${esc(d.format||'')}</td>
+          <td>${Number(d.text_len).toLocaleString()}</td>
+          <td><span class="badge ${d.claims?'':'warn'}">${d.claims} claims</span></td>
+          <td class="muted" style="font-size:.78rem" title="${esc(d.ingested_at||'')}">${(d.ingested_at||'').slice(0,10)}</td>
+          <td><button onclick="openDoc('${d.id}')" aria-label="Open ${esc(d.title)}">Open</button></td>
+        </tr>`).join('');
+    }
+    $('doc-total').textContent=`${data.total} total`;
+    $('doc-page').textContent=`${state.docOffset+1}-${Math.min(data.total, state.docOffset+data.items.length)} of ${data.total}`;
+  }catch(e){ $('doc-tbody').innerHTML=`<tr><td colspan="7" style="color:var(--err)">Failed: ${esc(e.message)}</td></tr>`; }
 }
-function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
 $('doc-search').addEventListener('click', ()=>{ state.docOffset=0; loadDocs(); });
 $('doc-clear').addEventListener('click', ()=>{ $('doc-q').value=''; $('doc-source').value=''; state.docOffset=0; loadDocs(); });
-$('doc-q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.docOffset=0; loadDocs(); }});
+$('doc-q').addEventListener('input', ()=>{ clearTimeout(_docDebounce); _docDebounce=setTimeout(()=>{ state.docOffset=0; loadDocs(); }, 350); });
+$('doc-q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ clearTimeout(_docDebounce); state.docOffset=0; loadDocs(); }});
 $('doc-prev').addEventListener('click', ()=>{ state.docOffset=Math.max(0, state.docOffset-state.docLimit); loadDocs(); });
 $('doc-next').addEventListener('click', ()=>{ state.docOffset+=state.docLimit; loadDocs(); });
 
@@ -486,42 +620,43 @@ async function openDoc(id){
   state.currentDoc = data;
   const d=$('doc-detail'); d.style.display='block';
   $('doc-detail-title').textContent = data.title || '(untitled)';
-  $('doc-detail-meta').textContent = `${data.source} · ${data.format} · ${data.raw_text.length} chars · ${data.content_hash.slice(0,12)}… · ${data.ingested_at}`;
-  $('doc-detail-body').innerHTML = `<p class="muted">Claims preview (first ${data.preview_claims.length}):</p>` + (data.preview_claims.map(c=> `<div style="border-left:3px solid #e5e7eb;padding:.35rem .6rem;margin:.4rem 0"><div>${esc(c.claim_text)}</div><div class="muted" style="font-size:.76rem">span ${c.span[0]}:${c.span[1]} · topics ${(c.topics||[]).join(', ')}</div></div>`).join('') || '<p class="muted">No claims yet — run Extract in Pipeline.</p>');
-  d.scrollIntoView({behavior:'smooth'});
+  $('doc-detail-meta').textContent = `${data.source} · ${data.format} · ${Number(data.raw_text.length).toLocaleString()} chars · ${data.content_hash.slice(0,10)}… · ${fmtDate(data.ingested_at)}`;
+  $('doc-detail-body').innerHTML = `<p class="muted">Claims preview (first ${data.preview_claims.length}) — <a href="#" onclick="document.getElementById('doc-view-claims').click();return false">see all</a></p>` + (data.preview_claims.map(c=> `<div style="border-left:3px solid var(--bd);padding:.4rem .7rem;margin:.45rem 0;border-radius:4px;background:var(--bg2)"><div style="font-size:.9rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.76rem">span ${c.span[0]}:${c.span[1]} · topics ${(c.topics||[]).join(', ')||'—'} · triviality ${Number(c.triviality||0).toFixed(2)}</div></div>`).join('') || '<div class="empty"><div class="ill">◎</div><b>No claims yet</b><div class="hint">Run Extract in Pipeline.</div></div>');
+  d.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 $('doc-detail-close').addEventListener('click', ()=> $('doc-detail').style.display='none');
 $('doc-view-raw').addEventListener('click', async()=>{
   if(!state.currentDoc) return;
   const data = await api('/api/documents/'+state.currentDoc.id+'/text');
-  const hl = data.raw_text.slice(0, 6000);
-  const body = `<h3>${esc(data.title)} — raw_text</h3><pre>${esc(hl)}</pre><p class="muted">${data.raw_text.length>6000?'… truncated 6000 chars':''}</p>`;
-  $('doc-modal-body').innerHTML=body; $('doc-modal').classList.add('open');
+  const hl = data.raw_text.slice(0, 8000);
+  const body = `<h3>${esc(data.title)} — raw_text <span class="tag">${Number(data.raw_text.length).toLocaleString()} chars</span></h3><pre>${esc(hl)}</pre><p class="muted">${data.raw_text.length>8000?'… truncated 8000 chars':''}</p><p><button onclick="navigator.clipboard.writeText(${JSON.stringify(data.raw_text.slice(0,2000))});toast('Copied')">Copy</button></p>`;
+  $('doc-modal-body').innerHTML=body; $('doc-modal').classList.add('open'); $('doc-modal').querySelector('button').focus();
 });
 $('doc-view-claims').addEventListener('click', async()=>{
   if(!state.currentDoc) return;
-  const claims = await api('/api/claims?document_id='+state.currentDoc.id+'&limit=50');
-  const body = `<h3>Claims — ${esc(state.currentDoc.title)}</h3>` + (claims.items.map(c=> `<div class="card" style="margin:.5rem 0"><div>${esc(c.claim_text)}</div><div class="muted" style="font-size:.78rem">span ${c.citation_span_start}:${c.citation_span_end} · entities ${(c.entities||[]).join(', ')||'—'} · topics ${(c.topics||[]).join(', ')||'—'}</div>${c.temporal? `<div class="hint">temporal: ${esc(JSON.stringify(c.temporal))}</div>`:''}${c.scope? `<div class="hint">scope: ${esc(JSON.stringify(c.scope))}</div>`:''}</div>`).join('')||'<p class="muted">No claims.</p>');
-  $('doc-modal-body').innerHTML=body; $('doc-modal').classList.add('open');
+  $('doc-modal-body').innerHTML='<div class="skeleton" style="height:60px"></div>'; $('doc-modal').classList.add('open');
+  const claims = await api('/api/claims?document_id='+state.currentDoc.id+'&limit=100');
+  const body = `<h3>Claims — ${esc(state.currentDoc.title)} <span class="tag">${claims.total} total</span></h3>` + (claims.items.map(c=> `<div class="card" style="margin:.5rem 0;box-shadow:none"><div style="font-size:.92rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.78rem">span ${c.citation_span_start}:${c.citation_span_end} · entities ${(c.entities||[]).join(', ')||'—'} · topics ${(c.topics||[]).join(', ')||'—'}</div>${c.temporal? `<div class="hint">temporal: ${esc(JSON.stringify(c.temporal))}</div>`:''}${c.scope? `<div class="hint">scope: ${esc(JSON.stringify(c.scope))}</div>`:''}</div>`).join('')||'<div class="empty"><div class="ill">◎</div>No claims.</div>');
+  $('doc-modal-body').innerHTML=body;
 });
 $('doc-delete').addEventListener('click', async()=>{
   if(!state.currentDoc) return;
-  if(!confirm(`Delete DB row for "${state.currentDoc.title}"? This removes its claims/flags but NOT the original file on disk. This cannot be undone.`)) return;
-  try{ const out= await api('/api/documents/'+state.currentDoc.id, {method:'DELETE'}); toast('Deleted '+out.deleted); $('doc-detail').style.display='none'; state.currentDoc=null; loadDocs(); loadDashboard(); }catch(e){ toast(String(e.message), false); }
+  if(!confirm(`Delete DB row for "${state.currentDoc.title}"?\n\nThis removes its claims/flags but NOT the original file on disk. This cannot be undone.`)) return;
+  try{ const out= await api('/api/documents/'+state.currentDoc.id, {method:'DELETE'}); toast('Deleted '+out.deleted.slice(0,8)); $('doc-detail').style.display='none'; state.currentDoc=null; loadDocs(); loadDashboard(); }catch(e){ toast(String(e.message), false); }
 });
 function closeModal(id){ $(id).classList.remove('open'); }
 $('doc-modal').addEventListener('click', e=>{ if(e.target.id==='doc-modal') closeModal('doc-modal'); });
 
-// Upload (auto-ingest)
-const drop=$('drop'); const fileInput=$('file-input');
+/* Upload (auto-ingest) */
+const drop=$('drop');
 ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('drag');}));
 drop.addEventListener('drop', e=>{ const files=e.dataTransfer.files; if(files.length) doUpload(files); });
-$('file-input').addEventListener('change', ()=>{ if(fileInput.files.length) doUpload(fileInput.files); });
+$('file-input').addEventListener('change', ()=>{ if($('file-input').files.length) doUpload($('file-input').files); });
 async function doUpload(fileList){
   const fd=new FormData();
   for(const f of fileList) fd.append('files', f, f.name);
-  $('doc-out').style.display='block'; $('doc-out').textContent='uploading…';
+  $('doc-out').style.display='block'; $('doc-out').textContent='Uploading '+fileList.length+' file(s)…';
   try{
     const res = await fetch('/api/documents/upload', {method:'POST', body:fd});
     const body=await res.json();
@@ -532,16 +667,17 @@ async function doUpload(fileList){
   }catch(e){ $('doc-out').textContent=String(e.message||e); toast(String(e.message), false); }
 }
 
-// Connections
+/* Connections */
 async function loadConns(){
+  $('conn-list').innerHTML='<div class="skeleton" style="height:42px"></div>';
   const data = await api('/api/connections');
   const el=$('conn-list');
-  if(!data.items.length){ el.innerHTML='<p class="muted">No connections yet. Add one above.</p>'; return; }
+  if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill">⬡</div><b>No connections</b><div class="hint">Add a local folder to index existing notes.</div></div>'; return; }
   el.innerHTML = data.items.map(c=> `
-    <div class="card" style="margin:.5rem 0">
-      <div class="row" style="align-items:center"><b>${esc(c.name)}</b> <span class="badge ${c.status==='connected'?'ok':c.status==='error'?'err':'warn'}">${esc(c.status)}</span> <span class="badge">${esc(c.kind)}</span> <span class="muted" style="margin-left:auto;font-size:.78rem">${esc(c.created_at||'')}</span></div>
+    <div class="card" style="margin:.5rem 0;box-shadow:none">
+      <div class="row" style="align-items:center"><b>${esc(c.name)}</b> <span class="badge ${c.status==='connected'?'ok':c.status==='error'?'err':'warn'}">${esc(c.status)}</span> <span class="badge">${esc(c.kind)}</span> <span class="muted" style="margin-left:auto;font-size:.78rem">${esc((c.created_at||'').slice(0,10))}</span></div>
       <div class="muted" style="font-size:.78rem;margin-top:.25rem">config: ${esc(JSON.stringify(c.config||{}))}</div>
-      ${c.last_sync_at? `<div class="hint">last sync: ${esc(c.last_sync_at)} · ${esc(JSON.stringify(c.last_sync_stats||{}))}</div>`:''}
+      ${c.last_sync_at? `<div class="hint">last sync: ${esc(c.last_sync_at.slice(0,19))} · ${esc(JSON.stringify(c.last_sync_stats||{}))}</div>`:''}
       ${c.error? `<div style="color:var(--err);font-size:.82rem;margin-top:.3rem">${esc(c.error)}</div>`:''}
       <div class="toolbar"><button onclick="syncConn('${c.id}')">Sync now</button><button class="danger" onclick="delConn('${c.id}')">Delete</button></div>
     </div>`).join('');
@@ -551,49 +687,51 @@ async function createConn(kind){
   const pathEl = kind==='local'? $('conn-local-path'): $('conn-notion-path');
   const name = nameEl? nameEl.value.trim(): kind;
   const path = pathEl? pathEl.value.trim(): '';
-  if(!path){ toast('Path required', false); return; }
+  if(!path){ toast('Path required', false); pathEl.focus(); return; }
   try{ const out= await api('/api/connections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind, name, config:{path}})}); toast('Added '+out.kind); loadConns(); }catch(e){ toast(String(e.message), false); }
 }
 async function syncConn(id){
-  const outEl=$('conn-out'); outEl.style.display='block'; outEl.textContent='syncing…';
+  const outEl=$('conn-out'); outEl.style.display='block'; outEl.textContent='Syncing…';
   try{ const out= await api('/api/connections/'+id+'/sync',{method:'POST'}); outEl.textContent=JSON.stringify(out,null,2); toast('Sync done'); loadConns(); loadDocs(); loadDashboard(); }catch(e){ outEl.textContent=String(e.message); toast(String(e.message), false); }
 }
 async function delConn(id){ if(!confirm('Delete connection?')) return; try{ await api('/api/connections/'+id,{method:'DELETE'}); toast('Deleted'); loadConns(); }catch(e){ toast(String(e.message), false); } }
 async function driveAuth(){
-  try{ const data= await api('/api/connections/drive/auth'); window.open(data.auth_url, '_blank'); $('drive-hint').textContent='Opened consent screen — approve then return. Tokens saved to .env.'; toast('Opened Drive consent'); }catch(e){ $('drive-hint').textContent=String(e.message); toast(String(e.message), false); }
+  try{ const data= await api('/api/connections/drive/auth'); window.open(data.auth_url, '_blank'); $('drive-hint').textContent='Opened consent — approve then return. Tokens saved to .env.'; toast('Opened Drive consent'); }catch(e){ $('drive-hint').textContent=String(e.message); toast(String(e.message), false); }
 }
 async function driveSync(){
-  $('conn-out').style.display='block'; $('conn-out').textContent='syncing Drive…';
+  $('conn-out').style.display='block'; $('conn-out').textContent='Syncing Drive…';
   try{ const out= await api('/api/connections/drive/sync',{method:'POST'}); $('conn-out').textContent=JSON.stringify(out,null,2); toast(`Drive sync: ${out.inserted} inserted`); loadConns(); loadDocs(); loadDashboard(); }catch(e){ $('conn-out').textContent=String(e.message); toast(String(e.message), false); }
 }
 
-// Pipeline
+/* Pipeline */
 async function loadJobs(targetId){
   const data= await api('/api/jobs?limit=10');
   const render = (items)=> items.length? items.map(j=> `
-    <div class="card" style="margin:.4rem 0;padding:.6rem .8rem">
-      <div><span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> <b>${esc(j.kind)}</b> <span class="muted" style="font-size:.78rem">${esc(j.created_at||'')}</span></div>
+    <div class="card" style="margin:.4rem 0;padding:.7rem .9rem;box-shadow:none">
+      <div style="display:flex;gap:.5rem;align-items:center"><span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> <b>${esc(j.kind)}</b> <span class="muted" style="font-size:.78rem">${esc((j.created_at||'').slice(11,19))}</span><span class="muted" style="margin-left:auto;font-size:.76rem">${esc(j.id.slice(0,8))}</span></div>
       <div class="muted" style="font-size:.78rem">params: ${esc(JSON.stringify(j.params||{}))}</div>
-      ${j.result? `<div class="hint">claims ${j.result.claims} · candidates ${j.result.candidates} · flags ${j.result.flags} · faithfulness ${j.result.citation_faithfulness!=null?(j.result.citation_faithfulness*100).toFixed(0)+'%':'n/a'}</div>`:''}
-      ${j.error? `<div style="color:var(--err);font-size:.82rem">${esc(j.error)}</div>`:''}
-    </div>`).join('') : '<p class="muted">No jobs yet.</p>';
+      ${j.result? `<div class="hint">claims ${j.result.claims} · candidates ${j.result.candidates} (${j.result.embedding_pairs||0} emb) · flags ${j.result.flags} · faithfulness ${j.result.citation_faithfulness!=null?(j.result.citation_faithfulness*100).toFixed(0)+'%':'n/a'}</div>`:''}
+      ${j.error? `<div style="color:var(--err);font-size:.82rem;margin-top:.25rem">${esc(j.error)}</div>`:''}
+    </div>`).join('') : '<div class="empty"><div class="ill">⚡</div><b>No jobs yet</b><div class="hint">Run pipeline to see progress here.</div></div>';
   if(targetId) $(targetId).innerHTML = render(data.items);
   else $('jobs-list').innerHTML = render(data.items);
+  $('jobs-count').textContent = String(data.items.length);
 }
 $('pipe-run').addEventListener('click', async()=>{
   const mode=$('pipe-mode').value;
   const refresh=$('pipe-refresh').checked;
   const top_k=$('pipe-topk').value.trim()? parseInt($('pipe-topk').value.trim(),10): null;
   const spc=$('pipe-spc').value.trim()? parseInt($('pipe-spc').value.trim(),10): null;
+  if(top_k!=null && (top_k<1||top_k>100)){ toast('Top K 1–100', false); return; }
+  if(spc!=null && (spc<1||spc>20)){ toast('Selected per claim 1–20', false); return; }
   const payload={ use_llm: mode==='llm', refresh, top_k, selected_per_claim: spc };
-  // clean nulls
   Object.keys(payload).forEach(k=> payload[k]==null && delete payload[k]);
-  $('pipe-spin').style.display='inline'; $('pipe-out').style.display='block'; $('pipe-out').textContent='creating job…';
+  $('pipe-spin').style.display='inline'; $('pipe-out').style.display='block'; $('pipe-out').textContent='Creating job…';
   try{
     const job= await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     $('pipe-out').textContent=JSON.stringify(job,null,2);
-    $('pipe-job').textContent=`job ${job.job_id} queued — polling…`;
-    toast('Pipeline job queued');
+    $('pipe-job').innerHTML=`<span class="badge warn">queued</span> job <code>${esc(job.job_id.slice(0,8))}</code> — polling…`;
+    toast('Pipeline queued');
     pollJob(job.job_id);
     loadJobs();
   }catch(e){ $('pipe-out').textContent=String(e.message); toast(String(e.message), false); }finally{ $('pipe-spin').style.display='none'; }
@@ -603,18 +741,19 @@ function pollJob(jobId){
   state.jobPoll=setInterval(async()=>{
     try{
       const j= await api('/api/jobs/'+jobId);
-      $('pipe-job').innerHTML = `<span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> ${esc(j.kind)} ${j.started_at? '· started '+esc(j.started_at.slice(11,19)):''} ${j.finished_at? '· finished '+esc(j.finished_at.slice(11,19)):''} ${j.error? '<br><span style="color:var(--err)">'+esc(j.error)+'</span>':''} ${j.result? '<pre style="margin-top:.4rem">'+esc(JSON.stringify(j.result,null,2))+'</pre>':''}`;
-      if(j.status==='done' || j.status==='error'){ clearInterval(state.jobPoll); loadDashboard(); loadJobs(); if(j.status==='done') toast('Pipeline done'); }
-    }catch(e){ clearInterval(state.jobPoll); $('pipe-job').textContent='poll failed: '+e.message; }
+      $('pipe-job').innerHTML = `<div><span class="badge ${j.status==='done'?'ok':j.status==='error'?'err':'warn'}">${esc(j.status)}</span> ${esc(j.kind)} ${j.started_at? '· started '+esc(j.started_at.slice(11,19)):''} ${j.finished_at? '· finished '+esc(j.finished_at.slice(11,19)):''} ${j.error? '<br><span style="color:var(--err)">'+esc(j.error)+'</span>':''} ${j.result? '<pre style="margin-top:.4rem">'+esc(JSON.stringify(j.result,null,2))+'</pre>':''}</div>`;
+      if(j.status==='done' || j.status==='error'){ clearInterval(state.jobPoll); state.jobPoll=null; loadDashboard(); loadJobs(); toast(j.status==='done'?'Pipeline done':'Pipeline error', j.status==='done'); }
+    }catch(e){ clearInterval(state.jobPoll); state.jobPoll=null; $('pipe-job').textContent='Poll failed: '+e.message; toast(e.message,false); }
   }, 1200);
 }
 $('pipe-extract').addEventListener('click', async()=>{
   const mode=$('pipe-extract-mode').value;
-  $('pipe-out').style.display='block'; $('pipe-out').textContent='extracting…';
+  $('pipe-out').style.display='block'; $('pipe-out').textContent='Extracting…';
   try{ const out= await api('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({use_llm: mode==='llm'})}); $('pipe-out').textContent=JSON.stringify(out,null,2); toast(`Extracted ${out.claims_inserted} claims`); loadDashboard(); }catch(e){ $('pipe-out').textContent=String(e.message); toast(String(e.message), false); }
 });
 
-// Flags
+/* Flags */
+let _flagDebounce=null;
 async function loadFlags(){
   const label=$('flag-label').value;
   const verified=$('flag-verified').value;
@@ -625,45 +764,58 @@ async function loadFlags(){
   if(verified) params.set('verified', verified);
   if(q) params.set('q', q);
   if(min) params.set('min_conf', min);
-  const data= await api('/api/flags?'+params.toString());
-  const el=$('flags-list');
-  if(!data.items.length){ el.innerHTML='<p class="muted">No flags. Run pipeline first.</p>'; }
-  else {
-    el.innerHTML = data.items.map(f=> `
-      <div class="card" style="margin:.6rem 0">
-        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-          <span class="lbl-${esc(f.final_label)}">${esc(f.final_label)}</span>
-          <span class="badge">conf ${Number(f.final_confidence).toFixed(2)}</span>
-          ${f.verification.overall_pass? '<span class="badge ok">verified</span>':'<span class="badge err">verify fail</span>'}
-          ${f.user_decision? `<span class="badge warn">you: ${esc(f.user_decision)}</span>`:''}
-          <span class="muted" style="margin-left:auto;font-size:.78rem">${esc(f.judge_model)} · ${esc(f.prompt_version)}</span>
-        </div>
-        <div style="margin:.6rem 0;display:grid;gap:.5rem">
-          <div style="border-left:3px solid #e5e7eb;padding:.4rem .6rem">
-            <div class="muted" style="font-size:.76rem">${esc(f.doc_a_title)} <a href="#" onclick="viewDocText('${f.doc_a_id}');return false">[view]</a></div>
-            <div style="font-size:.88rem">&ldquo;${esc(f.text_a)}&rdquo;</div>
-            <div class="hint" style="background:#fdf6e3;border-left:3px solid #f2c94c;padding:.25rem .5rem;margin-top:.3rem">&ldquo;…${esc(f.raw_a? f.raw_a.slice(f.span_a[0]-60,f.span_a[0]+120):'') }…&rdquo;</div>
+  $('flags-list').innerHTML='<div class="skeleton" style="height:84px"></div>';
+  try{
+    const data= await api('/api/flags?'+params.toString());
+    const el=$('flags-list');
+    if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill">⚑</div><b>No flags</b><div class="hint">Run pipeline — flags only surface after verification passes.</div></div>'; }
+    else {
+      el.innerHTML = data.items.map(f=>{
+        const conf = Number(f.final_confidence);
+        const pct = Math.round(conf*100);
+        const taxonomyColor = {genuine_contradiction:'var(--err)', superseded_by_time:'var(--warn)', different_scope:'var(--info)', ambiguous:'var(--muted)'}[f.final_label]||'var(--muted)';
+        return `
+        <div class="card" style="margin:.7rem 0;border-left:4px solid ${taxonomyColor}">
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <span style="font-weight:800;color:${taxonomyColor}">${esc(f.final_label)}</span>
+            <span class="badge">${pct}%</span>
+            <div class="conf-bar" style="width:90px" title="confidence ${conf.toFixed(2)}"><div class="conf-fill" style="width:${pct}%;background:${taxonomyColor}"></div></div>
+            ${f.verification.overall_pass? '<span class="badge ok">✓ verified</span>':'<span class="badge err">✗ verify fail</span>'}
+            ${f.user_decision? `<span class="badge warn">you: ${esc(f.user_decision)}</span>`:''}
+            <span class="muted" style="margin-left:auto;font-size:.76rem" title="${esc(f.judge_model)}">${esc(f.judge_model)} · ${esc(f.prompt_version)}</span>
           </div>
-          <div style="border-left:3px solid #e5e7eb;padding:.4rem .6rem">
-            <div class="muted" style="font-size:.76rem">${esc(f.doc_b_title)} <a href="#" onclick="viewDocText('${f.doc_b_id}');return false">[view]</a></div>
-            <div style="font-size:.88rem">&ldquo;${esc(f.text_b)}&rdquo;</div>
-            <div class="hint" style="background:#fdf6e3;border-left:3px solid #f2c94c;padding:.25rem .5rem;margin-top:.3rem">&ldquo;…${esc(f.raw_b? f.raw_b.slice(f.span_b[0]-60,f.span_b[0]+120):'') }…&rdquo;</div>
+          <div style="margin:.7rem 0;display:grid;gap:.6rem">
+            <div style="border:1px solid var(--bd);border-radius:8px;padding:.55rem .7rem;background:var(--bg2)">
+              <div class="muted" style="font-size:.76rem;display:flex;gap:.4rem;align-items:center">${esc(f.doc_a_title)} <a href="#" onclick="viewDocText('${f.doc_a_id}');return false" style="font-size:.76rem">[view doc]</a></div>
+              <div style="font-size:.92rem;margin-top:.15rem">&ldquo;${esc(f.text_a)}&rdquo;</div>
+              <div class="hint" style="background:color-mix(in srgb,#fef9c3 70%, transparent);border-left:3px solid #facc15;padding:.3rem .5rem;margin-top:.35rem;border-radius:4px">&ldquo;…${esc(f.raw_a? f.raw_a.slice(Math.max(0,f.span_a[0]-70), f.span_a[1]+70):'')}…&rdquo;</div>
+            </div>
+            <div style="border:1px solid var(--bd);border-radius:8px;padding:.55rem .7rem;background:var(--bg2)">
+              <div class="muted" style="font-size:.76rem;display:flex;gap:.4rem;align-items:center">${esc(f.doc_b_title)} <a href="#" onclick="viewDocText('${f.doc_b_id}');return false" style="font-size:.76rem">[view doc]</a></div>
+              <div style="font-size:.92rem;margin-top:.15rem">&ldquo;${esc(f.text_b)}&rdquo;</div>
+              <div class="hint" style="background:color-mix(in srgb,#fef9c3 70%, transparent);border-left:3px solid #facc15;padding:.3rem .5rem;margin-top:.35rem;border-radius:4px">&ldquo;…${esc(f.raw_b? f.raw_b.slice(Math.max(0,f.span_b[0]-70), f.span_b[1]+70):'')}…&rdquo;</div>
+            </div>
           </div>
-        </div>
-        <details><summary class="muted" style="cursor:pointer">judge reasoning · verify: verbatim ${f.verification.span_a_verbatim?'✓':'✗'}/${f.verification.span_b_verbatim?'✓':'✗'} · fuzzy ${Math.round(f.verification.span_a_fuzzy)}/${Math.round(f.verification.span_b_fuzzy)} · entail ${Number(f.verification.span_a_entailment).toFixed(2)}/${Number(f.verification.span_b_entailment).toFixed(2)}</summary><div style="font-size:.84rem;color:var(--muted);margin-top:.4rem;font-style:italic">${esc(f.reasoning||'—')}</div></details>
-        <div class="toolbar">
-          <button onclick="triageFlag('${f.id}','confirmed')" style="font-size:.82rem">Confirm</button>
-          <button onclick="triageFlag('${f.id}','rejected')" style="font-size:.82rem">Reject</button>
-          <button onclick="triageFlag('${f.id}','unsure')" style="font-size:.82rem">Unsure</button>
-          <button onclick="viewFlag('${f.id}')" class="ghost" style="font-size:.82rem">Details</button>
-        </div>
-      </div>`).join('');
-  }
-  $('flag-total').textContent=`${data.total} total`;
-  $('flag-page').textContent=`${state.flagOffset}-${Math.min(data.total, state.flagOffset+data.items.length)} of ${data.total}`;
+          <details><summary class="muted" style="cursor:pointer">Judge reasoning · verify: verbatim ${f.verification.span_a_verbatim?'✓':'✗'}/${f.verification.span_b_verbatim?'✓':'✗'} · fuzzy ${Math.round(f.verification.span_a_fuzzy)}/${Math.round(f.verification.span_b_fuzzy)} · entail ${Number(f.verification.span_a_entailment).toFixed(2)}/${Number(f.verification.span_b_entailment).toFixed(2)}</summary><div style="font-size:.84rem;color:var(--muted);margin-top:.4rem;font-style:italic">${esc(f.reasoning||'—')}</div></details>
+          <div class="toolbar" style="margin-bottom:0">
+            <button onclick="triageFlag('${f.id}','confirmed')" style="font-size:.82rem">✓ Confirm</button>
+            <button onclick="triageFlag('${f.id}','rejected')" style="font-size:.82rem">✗ Reject</button>
+            <button onclick="triageFlag('${f.id}','unsure')" style="font-size:.82rem">? Unsure</button>
+            <button onclick="viewFlag('${f.id}')" class="ghost" style="font-size:.82rem">Details</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    $('flag-total').textContent=`${data.total} total`;
+    const from = data.total? state.flagOffset+1:0;
+    $('flag-page').textContent=`${from}-${Math.min(data.total, state.flagOffset+data.items.length)} of ${data.total}`;
+    $('flag-prev').disabled = state.flagOffset===0;
+    $('flag-next').disabled = state.flagOffset+state.flagLimit >= data.total;
+  }catch(e){ $('flags-list').innerHTML=`<div style="color:var(--err)">Failed: ${esc(e.message)}</div>`; }
 }
 $('flag-search').addEventListener('click', ()=>{ state.flagOffset=0; loadFlags(); });
 $('flag-clear').addEventListener('click', ()=>{ $('flag-label').value=''; $('flag-verified').value=''; $('flag-q').value=''; $('flag-min').value=''; state.flagOffset=0; loadFlags(); });
+$('flag-q').addEventListener('input', ()=>{ clearTimeout(_flagDebounce); _flagDebounce=setTimeout(()=>{ state.flagOffset=0; loadFlags(); }, 350); });
 $('flag-prev').addEventListener('click', ()=>{ state.flagOffset=Math.max(0, state.flagOffset-state.flagLimit); loadFlags(); });
 $('flag-next').addEventListener('click', ()=>{ state.flagOffset+=state.flagLimit; loadFlags(); });
 async function triageFlag(id, decision){
@@ -675,51 +827,59 @@ async function viewFlag(id){
   const data= await api('/api/flags?limit=200');
   const f=data.items.find(x=>x.id===id);
   if(!f) return;
-  $('flag-modal-body').innerHTML = `<h3>${esc(f.final_label)} · ${Number(f.final_confidence).toFixed(2)}</h3><pre>${esc(JSON.stringify(f,null,2))}</pre>`;
-  $('flag-modal').classList.add('open');
+  $('flag-modal-body').innerHTML = `<h3>${esc(f.final_label)} <span class="badge">${Number(f.final_confidence).toFixed(2)}</span></h3><pre>${esc(JSON.stringify(f,null,2))}</pre><p><button onclick="navigator.clipboard.writeText('${esc(f.text_a).replace(/'/g,"\\'")}');toast('Copied')">Copy claim A</button></p>`;
+  $('flag-modal').classList.add('open'); $('flag-modal').querySelector('button').focus();
 }
 $('flag-modal').addEventListener('click', e=>{ if(e.target.id==='flag-modal') closeModal('flag-modal'); });
 async function viewDocText(docId){
+  $('doc-modal-body').innerHTML='<div class="skeleton" style="height:40px"></div>'; $('doc-modal').classList.add('open');
   const data= await api('/api/documents/'+docId+'/text');
-  $('doc-modal-body').innerHTML=`<h3>${esc(data.title)}</h3><pre>${esc(data.raw_text.slice(0,5000))}</pre>`;
-  $('doc-modal').classList.add('open');
+  $('doc-modal-body').innerHTML=`<h3>${esc(data.title)} <span class="tag">${Number(data.raw_text.length).toLocaleString()} chars</span></h3><pre>${esc(data.raw_text.slice(0,6000))}</pre><p class="muted">${data.raw_text.length>6000?'… truncated 6000 chars':''}</p>`;
 }
 
-// Eval
+/* Eval */
 async function loadEval(){
   try{
     const st= await api('/api/eval/status');
-    $('eval-meta').textContent=`${st.total} labels · ${st.staged_pending} pending · breakdown: ${Object.entries(st.breakdown).map(([k,v])=>`${k}:${v}`).join(' · ')||'—'}`;
+    $('eval-meta').textContent=`${st.total} labels · ${st.staged_pending} pending · ${Object.entries(st.breakdown).map(([k,v])=>`${k}:${v}`).join(' · ')||'—'}`;
   }catch(e){ $('eval-meta').textContent='status failed: '+e.message; }
+  $('eval-box').innerHTML='<div class="skeleton" style="height:88px"></div>';
   try{
     const data= await api('/api/eval');
     const cats = data.categories||{};
-    const rows = Object.entries(cats).map(([cat, m])=> `<tr><td><b>${esc(cat)}</b></td><td>${m.tp}</td><td>${m.fp}</td><td>${m.fn}</td><td>${Number(m.precision).toFixed(2)}</td><td>${Number(m.recall).toFixed(2)}</td><td>${Number(m.f1).toFixed(2)}</td></tr>`).join('');
+    const rows = Object.entries(cats).map(([cat, m])=>{
+      const f1 = m.f1==null? '—': Number(m.f1).toFixed(2);
+      const p = m.precision==null? '—': Number(m.precision).toFixed(2);
+      const r = m.recall==null? '—': Number(m.recall).toFixed(2);
+      const cls = cat.includes('true_negative') ? 'muted':'';
+      return `<tr class="${cls}"><td><b>${esc(cat)}</b></td><td>${m.tp}</td><td>${m.fp}</td><td>${m.fn}</td><td>${p}</td><td>${r}</td><td><span class="badge ${f1==='—'?'':'ok'}">${f1}</span></td></tr>`;
+    }).join('');
     $('eval-box').innerHTML = `
-      <div class="grid cols3">
-        <div><b>Micro</b> P ${Number((data.micro||{}).precision||0).toFixed(2)} · R ${Number((data.micro||{}).recall||0).toFixed(2)} · F1 ${Number((data.micro||{}).f1||0).toFixed(2)}</div>
-        <div><b>Macro F1</b> ${Number(data.macro_f1||0).toFixed(2)}</div>
-        <div><b>Detection</b> R ${Number(data.detection_recall||0).toFixed(2)} · P ${Number(data.detection_precision||0).toFixed(2)}</div>
+      <div class="grid cols3" style="margin-bottom:.6rem">
+        <div class="card" style="box-shadow:none;padding:.7rem"><div class="muted">Micro</div><div style="font-weight:700">P ${Number((data.micro||{}).precision||0).toFixed(2)} · R ${Number((data.micro||{}).recall||0).toFixed(2)} · F1 ${Number((data.micro||{}).f1||0).toFixed(2)}</div></div>
+        <div class="card" style="box-shadow:none;padding:.7rem"><div class="muted">Macro F1</div><div style="font-weight:700">${data.macro_f1!=null? Number(data.macro_f1).toFixed(2):'—'}</div></div>
+        <div class="card" style="box-shadow:none;padding:.7rem"><div class="muted">Detection</div><div style="font-weight:700">R ${data.detection_recall!=null? Number(data.detection_recall).toFixed(2):'—'} · P ${data.detection_precision!=null? Number(data.detection_precision).toFixed(2):'—'}</div></div>
       </div>
-      <div style="margin-top:.6rem"><b>Citation faithfulness</b> ${data.citation_faithfulness!=null? (data.citation_faithfulness*100).toFixed(0)+'%':'n/a'} · labeled ${data.n_labeled} · judged ${data.n_judged} · verified ${data.n_verified}</div>
-      <div style="overflow:auto;margin-top:.6rem"><table><thead><tr><th>Category</th><th>TP</th><th>FP</th><th>FN</th><th>P</th><th>R</th><th>F1</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted">No categories yet — label pairs first.</td></tr>'}</tbody></table></div>
-      <pre style="margin-top:.6rem">${esc(JSON.stringify(data,null,2))}</pre>`;
-  }catch(e){ $('eval-box').textContent='eval failed: '+e.message; }
+      <div style="margin-top:.2rem"><b>Citation faithfulness</b> ${data.citation_faithfulness!=null? `<span class="badge ${data.citation_faithfulness>0.85?'ok':'warn'}">${(data.citation_faithfulness*100).toFixed(0)}%</span>`:'<span class="badge">n/a</span>'} · labeled ${data.n_labeled} · judged ${data.n_judged} · verified ${data.n_verified}</div>
+      <div style="overflow:auto;margin-top:.7rem;border:1px solid var(--bd);border-radius:8px"><table><thead><tr><th>Category</th><th>TP</th><th>FP</th><th>FN</th><th>P</th><th>R</th><th>F1</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted">No categories yet — label pairs first.</td></tr>'}</tbody></table></div>
+      <details style="margin-top:.6rem"><summary class="muted">Raw JSON</summary><pre>${esc(JSON.stringify(data,null,2))}</pre></details>`;
+  }catch(e){ $('eval-box').innerHTML=`<div style="color:var(--err)">Eval failed: ${esc(e.message)}</div>`; }
 }
 $('eval-refresh').addEventListener('click', loadEval);
 
 $('label-next').addEventListener('click', async()=>{
   const pool=$('label-pool').value;
+  $('label-pair').innerHTML='<div class="skeleton" style="height:64px"></div>';
   try{
     const data= await api('/api/labels/pending?pool='+pool+'&limit=20');
-    if(!data.items.length){ $('label-pair').innerHTML='<p class="muted">No pending pairs in this pool. Try another pool or run extract/pipeline.</p>'; $('label-actions').style.display='none'; state.pendingPair=null; return; }
+    if(!data.items.length){ $('label-pair').innerHTML='<div class="empty"><div class="ill">◎</div><b>No pending pairs</b><div class="hint">Try another pool or run extract/pipeline.</div></div>'; $('label-actions').style.display='none'; state.pendingPair=null; return; }
     const p=data.items[0]; state.pendingPair=p;
     $('label-pair').innerHTML = `
-      <div style="border-left:3px solid var(--accent);padding:.5rem .6rem;margin:.5rem 0"><div class="muted" style="font-size:.76rem">${esc(p.a_doc)} · ${p.a_start}:${p.a_end}</div><div>${esc(p.a_text)}</div></div>
-      <div style="border-left:3px solid var(--accent);padding:.5rem .6rem;margin:.5rem 0"><div class="muted" style="font-size:.76rem">${esc(p.b_doc)} · ${p.b_start}:${p.b_end}</div><div>${esc(p.b_text)}</div></div>
-      <div class="hint">Claim IDs: ${esc(p.a_id.slice(0,8))}… ↔ ${esc(p.b_id.slice(0,8))}…</div>`;
+      <div style="border-left:3px solid var(--accent);padding:.6rem .7rem;margin:.5rem 0;background:var(--bg2);border-radius:6px"><div class="muted" style="font-size:.76rem">${esc(p.a_doc)} · ${p.a_start}:${p.a_end}</div><div style="font-weight:500">${esc(p.a_text)}</div></div>
+      <div style="border-left:3px solid var(--accent2);padding:.6rem .7rem;margin:.5rem 0;background:var(--bg2);border-radius:6px"><div class="muted" style="font-size:.76rem">${esc(p.b_doc)} · ${p.b_start}:${p.b_end}</div><div style="font-weight:500">${esc(p.b_text)}</div></div>
+      <div class="hint">IDs: ${esc(p.a_id.slice(0,8))}… ↔ ${esc(p.b_id.slice(0,8))}… · <span class="kbd">c</span> contradiction · <span class="kbd">d</span> near_dup</div>`;
     $('label-actions').style.display='block';
-  }catch(e){ $('label-pair').textContent='fetch failed: '+e.message; }
+  }catch(e){ $('label-pair').innerHTML=`<div style="color:var(--err)">Fetch failed: ${esc(e.message)}</div>`; }
 });
 async function submitLabel(label){
   if(!state.pendingPair){ toast('No pair fetched', false); return; }
@@ -733,26 +893,26 @@ async function submitLabel(label){
     $('label-actions').style.display='none';
     state.pendingPair=null;
     loadStaged(); loadEval(); loadDashboard();
-    // auto fetch next after short delay
-    setTimeout(()=> $('label-next').click(), 500);
+    setTimeout(()=> $('label-next').click(), 450);
   }catch(e){ toast(String(e.message), false); }
 }
 async function loadStaged(){
   const status=$('staged-status').value;
   const params=new URLSearchParams({limit:'20', offset:'0'});
   if(status) params.set('status', status);
+  $('staged-list').innerHTML='<div class="skeleton" style="height:44px"></div>';
   try{
     const data= await api('/api/labels/staged?'+params.toString());
-    $('staged-total').textContent=`${data.total} total · ${data.staged_pending} pending`;
-    if(!data.items.length){ $('staged-list').innerHTML='<p class="muted">Empty queue.</p>'; return; }
+    $('staged-total').textContent=`${data.total} total${data.staged_pending!=null? ' · '+data.staged_pending+' pending':''}`;
+    if(!data.items.length){ $('staged-list').innerHTML='<div class="empty"><div class="ill">✓</div><b>Empty queue</b><div class="hint">Staged labels appear here for review.</div></div>'; return; }
     $('staged-list').innerHTML = data.items.map(r=> `
-      <div class="card" style="margin:.4rem 0;padding:.6rem .8rem">
-        <div><span class="badge ${r.status==='pending'?'warn':r.status==='approved'?'ok':'err'}">${esc(r.status)}</span> <b>${esc(r.label)}</b> <span class="muted" style="font-size:.78rem">${esc(r.labeled_by)} → ${esc(r.created_at.slice(0,19))}</span></div>
+      <div class="card" style="margin:.4rem 0;padding:.7rem .85rem;box-shadow:none">
+        <div style="display:flex;gap:.4rem;align-items:center"><span class="badge ${r.status==='pending'?'warn':r.status==='approved'?'ok':'err'}">${esc(r.status)}</span> <b>${esc(r.label)}</b> <span class="muted" style="font-size:.78rem;margin-left:auto">${esc(r.labeled_by)} · ${esc((r.created_at||'').slice(0,16))}</span></div>
         <div class="hint">${esc(r.claim_a_id.slice(0,8))}… ↔ ${esc(r.claim_b_id.slice(0,8))}…</div>
         ${r.notes? `<div style="font-size:.84rem;margin-top:.25rem">${esc(r.notes)}</div>`:''}
-        ${r.status==='pending'? `<div class="toolbar"><button onclick="reviewStaged('${r.id}','approve')">Approve</button><button class="danger" onclick="reviewStaged('${r.id}','reject')">Reject</button></div>`: `<div class="hint">reviewed by ${esc(r.reviewed_by||'—')} · ${esc(r.reviewed_at||'')}</div>`}
+        ${r.status==='pending'? `<div class="toolbar" style="margin-bottom:0"><button onclick="reviewStaged('${r.id}','approve')">Approve</button><button class="danger" onclick="reviewStaged('${r.id}','reject')">Reject</button></div>`: `<div class="hint">reviewed by ${esc(r.reviewed_by||'—')} · ${esc((r.reviewed_at||'').slice(0,16))}</div>`}
       </div>`).join('');
-  }catch(e){ $('staged-list').textContent='failed: '+e.message; }
+  }catch(e){ $('staged-list').innerHTML=`<div style="color:var(--err)">Failed: ${esc(e.message)}</div>`; }
 }
 async function reviewStaged(id, action){
   const notes = prompt(`Notes for ${action}?`, '');
@@ -762,7 +922,7 @@ async function reviewStaged(id, action){
 $('staged-refresh').addEventListener('click', loadStaged);
 $('staged-status').addEventListener('change', loadStaged);
 
-// Boot
+/* Boot */
 (async()=>{
   const p=(location.hash||'#dashboard').slice(1);
   if(document.getElementById('page-'+p)) navActive(p); else navActive('dashboard');
