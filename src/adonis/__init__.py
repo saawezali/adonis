@@ -1,6 +1,6 @@
 """Adonis — Contradiction Finder Across Your Docs.
 
-See PLAN.md for the architecture and milestone plan.
+See README.md for usage, PLAN.md for architecture.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"

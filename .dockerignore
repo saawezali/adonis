@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+data/db
+data/corpus
+reports/*.html
+reports/eval.json
+.env
+.git

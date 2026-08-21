@@ -1,0 +1,16 @@
+services:
+  adonis:
+    build: .
+    image: adonis:0.1.0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./.env:/app/.env:ro
+    environment:
+      # Override via .env file instead; keep explicit for clarity
+      ADONIS_DB_PATH: data/db/adonis.sqlite
+      ADONIS_CORPUS_DIR: data/corpus
+      ADONIS_REPORTS_DIR: reports
+    restart: unless-stopped

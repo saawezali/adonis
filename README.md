@@ -1,5 +1,7 @@
 # Adonis — Contradiction Finder Across Your Docs
 
+[![CI](https://github.com/anomalyco/opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/anomalyco/opencode/actions/workflows/ci.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-black)](#)
+
 > Finds where two documents make conflicting claims about the same entity, with citation-grounded explanations — not just a flag. Local-first, provider-independent, built to show real AI systems engineering rather than a thin LLM wrapper.
 
 `PLAN.md` is the source of truth for design decisions, schema, and the §9–12 audit/remediation log. This README is the operational guide.
