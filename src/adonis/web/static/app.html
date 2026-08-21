@@ -52,6 +52,9 @@
   .header-actions{display:flex;align-items:center;gap:.4rem;margin-left:.4rem}
   .icon-btn{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--bd);background:var(--card);cursor:pointer;color:var(--muted)}
   .icon-btn:hover{background:var(--bg2);color:var(--fg)}
+  .ico{width:16px;height:16px;flex-shrink:0}
+  .empty .ill .ico{width:28px;height:28px;margin:0 auto;color:var(--muted2)}
+  .empty .ill{margin-bottom:.6rem;opacity:1;display:grid;place-items:center}
   /* Layout */
   .wrap{max-width:1180px;margin:1.1rem auto;padding:0 1rem}
   .grid{display:grid;gap:.9rem}
@@ -141,17 +144,17 @@
     <span class="badge" title="Local-only, no cloud sync">LOCAL</span>
   </div>
   <nav id="nav" aria-label="Primary" style="margin-left:auto">
-    <button data-page="dashboard" class="active" aria-current="page"><span class="ico">◈</span> Dashboard</button>
-    <button data-page="documents"><span class="ico">▭</span> Documents</button>
-    <button data-page="connections"><span class="ico">⬡</span> Connections</button>
-    <button data-page="pipeline"><span class="ico">⚡</span> Pipeline</button>
-    <button data-page="flags"><span class="ico">⚑</span> Flags</button>
-    <button data-page="eval"><span class="ico">◎</span> Eval</button>
-    <button data-page="settings"><span class="ico">⚙</span> Settings</button>
+    <button data-page="dashboard" class="active" aria-current="page"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/></svg> Dashboard</button>
+    <button data-page="documents"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H8"/><path d="M16 17H8"/><path d="M13 17H16"/></svg> Documents</button>
+    <button data-page="connections"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v8l-7 4-7-4V7z"/><path d="M12 12L5 7"/><path d="M12 12l7-5"/><path d="M12 12v8"/></svg> Connections</button>
+    <button data-page="pipeline"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> Pipeline</button>
+    <button data-page="flags"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18"/><path d="M5 7h12l-2 3 2 3H5"/></svg> Flags</button>
+    <button data-page="eval"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/><path d="M12 18v2"/><path d="M4 12h2"/><path d="M18 12h2"/></svg> Eval</button>
+    <button data-page="settings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg> Settings</button>
   </nav>
   <div class="header-actions">
-    <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle theme">◐</button>
-    <a class="icon-btn" href="/report" target="_blank" title="Open static report" aria-label="Report">↗</a>
+    <button class="icon-btn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle theme"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3a9 9 0 0 1 0 18"/></svg></button>
+    <a class="icon-btn" href="/report" target="_blank" title="Open static report" aria-label="Report"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg></a>
   </div>
 </header>
 
@@ -165,17 +168,17 @@
       <h2>Welcome — get started in 60 seconds <span class="tag">3 steps</span></h2>
       <div class="grid cols3" style="margin-top:.6rem">
         <div class="card" style="box-shadow:none;border-style:dashed">
-          <div style="font-size:1.3rem">①</div><b>Drop files</b>
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--card);display:grid;place-items:center;font-size:.85rem;font-weight:700">1</div><b>Drop files</b>
           <p class="hint">Add .md / .txt / .docx or a Notion .zip. Auto-ingest runs instantly.</p>
           <button class="primary" onclick="navigate('documents')">Go to Documents</button>
         </div>
         <div class="card" style="box-shadow:none;border-style:dashed">
-          <div style="font-size:1.3rem">②</div><b>Extract & run</b>
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--card);display:grid;place-items:center;font-size:.85rem;font-weight:700">2</div><b>Extract & run</b>
           <p class="hint">Use Demo (offline) or Real LLM. No key needed to try.</p>
           <button onclick="navigate('pipeline')">Open Pipeline</button>
         </div>
         <div class="card" style="box-shadow:none;border-style:dashed">
-          <div style="font-size:1.3rem">③</div><b>Triage flags</b>
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--card);display:grid;place-items:center;font-size:.85rem;font-weight:700">3</div><b>Triage flags</b>
           <p class="hint">Every flag is verified (span + entailment) before it surfaces.</p>
           <button onclick="navigate('flags')">View Flags</button>
         </div>
@@ -186,8 +189,8 @@
       <div class="card">
         <h2>Quick actions</h2>
         <div class="row" style="margin:.6rem 0">
-          <button class="primary" onclick="navigate('documents')">＋ Upload files</button>
-          <button onclick="navigate('pipeline')">▶ Run pipeline</button>
+          <button class="primary" onclick="navigate('documents')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Upload files</button>
+          <button onclick="navigate('pipeline')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21" fill="currentColor" stroke="none"/></svg> Run pipeline</button>
           <button onclick="navigate('flags')">View flags</button>
         </div>
         <p class="hint">Press <span class="kbd">/</span> to search documents, <span class="kbd">?</span> for help. Auto-ingest is on.</p>
@@ -321,7 +324,7 @@
         </div>
       </div>
       <div class="toolbar">
-        <button class="primary" id="pipe-run">▶ Run pipeline (async)</button>
+        <button class="primary" id="pipe-run"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21" fill="currentColor" stroke="none"/></svg> Run pipeline (async)</button>
         <button id="pipe-extract">Extract claims only</button>
         <select id="pipe-extract-mode" style="max-width:140px"><option value="demo">Demo extract</option><option value="llm">Real extract</option></select>
         <span id="pipe-spin" style="display:none"><span class="spinner"></span> working…</span>
@@ -375,7 +378,7 @@
       <div class="toolbar">
         <button id="eval-refresh">Refresh metrics</button>
         <span id="eval-meta" class="muted"></span>
-        <a href="/reports/eval.json" target="_blank" class="muted" style="margin-left:auto">eval.json ↗</a>
+        <a href="/reports/eval.json" target="_blank" class="muted" style="margin-left:auto">eval.json <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg></a>
       </div>
       <div id="eval-box" class="muted"><div class="skeleton" style="height:90px"></div></div>
     </div>
@@ -576,8 +579,8 @@ $('dash-refresh').addEventListener('click', loadDashboard);
 
 /* Documents */
 function fileIcon(fmt){
-  const m={md:'📝', markdown:'📝', txt:'📄', docx:'📃', csv:'▦', zip:'🗜'};
-  return m[(fmt||'').toLowerCase()]||'📄';
+  const m={md:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H16"/><path d="M10 17H16"/></svg>', markdown:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H16"/><path d="M10 17H16"/></svg>', txt:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>', docx:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13H16"/><path d="M10 17H16"/></svg>', csv:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>', zip:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>'};
+  return m[(fmt||'').toLowerCase()]||'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
 }
 let _docDebounce=null;
 async function loadDocs(){
@@ -591,7 +594,7 @@ async function loadDocs(){
     const data = await api('/api/documents?'+params.toString());
     const tb=$('doc-tbody');
     if(!data.items.length){
-      tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ill">📂</div><b>No documents</b><div class="hint">Drop files above or add a Connection.</div></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><b>No documents</b><div class="hint">Drop files above or add a Connection.</div></div></td></tr>`;
     } else {
       tb.innerHTML = data.items.map(d=> `
         <tr>
@@ -621,7 +624,7 @@ async function openDoc(id){
   const d=$('doc-detail'); d.style.display='block';
   $('doc-detail-title').textContent = data.title || '(untitled)';
   $('doc-detail-meta').textContent = `${data.source} · ${data.format} · ${Number(data.raw_text.length).toLocaleString()} chars · ${data.content_hash.slice(0,10)}… · ${fmtDate(data.ingested_at)}`;
-  $('doc-detail-body').innerHTML = `<p class="muted">Claims preview (first ${data.preview_claims.length}) — <a href="#" onclick="document.getElementById('doc-view-claims').click();return false">see all</a></p>` + (data.preview_claims.map(c=> `<div style="border-left:3px solid var(--bd);padding:.4rem .7rem;margin:.45rem 0;border-radius:4px;background:var(--bg2)"><div style="font-size:.9rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.76rem">span ${c.span[0]}:${c.span[1]} · topics ${(c.topics||[]).join(', ')||'—'} · triviality ${Number(c.triviality||0).toFixed(2)}</div></div>`).join('') || '<div class="empty"><div class="ill">◎</div><b>No claims yet</b><div class="hint">Run Extract in Pipeline.</div></div>');
+  $('doc-detail-body').innerHTML = `<p class="muted">Claims preview (first ${data.preview_claims.length}) — <a href="#" onclick="document.getElementById('doc-view-claims').click();return false">see all</a></p>` + (data.preview_claims.map(c=> `<div style="border-left:3px solid var(--bd);padding:.4rem .7rem;margin:.45rem 0;border-radius:4px;background:var(--bg2)"><div style="font-size:.9rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.76rem">span ${c.span[0]}:${c.span[1]} · topics ${(c.topics||[]).join(', ')||'—'} · triviality ${Number(c.triviality||0).toFixed(2)}</div></div>`).join('') || '<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/><path d="M12 18v2"/><path d="M4 12h2"/><path d="M18 12h2"/></svg></div><b>No claims yet</b><div class="hint">Run Extract in Pipeline.</div></div>');
   d.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 $('doc-detail-close').addEventListener('click', ()=> $('doc-detail').style.display='none');
@@ -636,7 +639,7 @@ $('doc-view-claims').addEventListener('click', async()=>{
   if(!state.currentDoc) return;
   $('doc-modal-body').innerHTML='<div class="skeleton" style="height:60px"></div>'; $('doc-modal').classList.add('open');
   const claims = await api('/api/claims?document_id='+state.currentDoc.id+'&limit=100');
-  const body = `<h3>Claims — ${esc(state.currentDoc.title)} <span class="tag">${claims.total} total</span></h3>` + (claims.items.map(c=> `<div class="card" style="margin:.5rem 0;box-shadow:none"><div style="font-size:.92rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.78rem">span ${c.citation_span_start}:${c.citation_span_end} · entities ${(c.entities||[]).join(', ')||'—'} · topics ${(c.topics||[]).join(', ')||'—'}</div>${c.temporal? `<div class="hint">temporal: ${esc(JSON.stringify(c.temporal))}</div>`:''}${c.scope? `<div class="hint">scope: ${esc(JSON.stringify(c.scope))}</div>`:''}</div>`).join('')||'<div class="empty"><div class="ill">◎</div>No claims.</div>');
+  const body = `<h3>Claims — ${esc(state.currentDoc.title)} <span class="tag">${claims.total} total</span></h3>` + (claims.items.map(c=> `<div class="card" style="margin:.5rem 0;box-shadow:none"><div style="font-size:.92rem">${esc(c.claim_text)}</div><div class="muted" style="font-size:.78rem">span ${c.citation_span_start}:${c.citation_span_end} · entities ${(c.entities||[]).join(', ')||'—'} · topics ${(c.topics||[]).join(', ')||'—'}</div>${c.temporal? `<div class="hint">temporal: ${esc(JSON.stringify(c.temporal))}</div>`:''}${c.scope? `<div class="hint">scope: ${esc(JSON.stringify(c.scope))}</div>`:''}</div>`).join('')||'<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/><path d="M12 18v2"/><path d="M4 12h2"/><path d="M18 12h2"/></svg></div>No claims.</div>');
   $('doc-modal-body').innerHTML=body;
 });
 $('doc-delete').addEventListener('click', async()=>{
@@ -672,7 +675,7 @@ async function loadConns(){
   $('conn-list').innerHTML='<div class="skeleton" style="height:42px"></div>';
   const data = await api('/api/connections');
   const el=$('conn-list');
-  if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill">⬡</div><b>No connections</b><div class="hint">Add a local folder to index existing notes.</div></div>'; return; }
+  if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v8l-7 4-7-4V7z"/><path d="M12 12L5 7"/><path d="M12 12l7-5"/><path d="M12 12v8"/></svg></div><b>No connections</b><div class="hint">Add a local folder to index existing notes.</div></div>'; return; }
   el.innerHTML = data.items.map(c=> `
     <div class="card" style="margin:.5rem 0;box-shadow:none">
       <div class="row" style="align-items:center"><b>${esc(c.name)}</b> <span class="badge ${c.status==='connected'?'ok':c.status==='error'?'err':'warn'}">${esc(c.status)}</span> <span class="badge">${esc(c.kind)}</span> <span class="muted" style="margin-left:auto;font-size:.78rem">${esc((c.created_at||'').slice(0,10))}</span></div>
@@ -712,7 +715,7 @@ async function loadJobs(targetId){
       <div class="muted" style="font-size:.78rem">params: ${esc(JSON.stringify(j.params||{}))}</div>
       ${j.result? `<div class="hint">claims ${j.result.claims} · candidates ${j.result.candidates} (${j.result.embedding_pairs||0} emb) · flags ${j.result.flags} · faithfulness ${j.result.citation_faithfulness!=null?(j.result.citation_faithfulness*100).toFixed(0)+'%':'n/a'}</div>`:''}
       ${j.error? `<div style="color:var(--err);font-size:.82rem;margin-top:.25rem">${esc(j.error)}</div>`:''}
-    </div>`).join('') : '<div class="empty"><div class="ill">⚡</div><b>No jobs yet</b><div class="hint">Run pipeline to see progress here.</div></div>';
+    </div>`).join('') : '<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div><b>No jobs yet</b><div class="hint">Run pipeline to see progress here.</div></div>';
   if(targetId) $(targetId).innerHTML = render(data.items);
   else $('jobs-list').innerHTML = render(data.items);
   $('jobs-count').textContent = String(data.items.length);
@@ -768,7 +771,7 @@ async function loadFlags(){
   try{
     const data= await api('/api/flags?'+params.toString());
     const el=$('flags-list');
-    if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill">⚑</div><b>No flags</b><div class="hint">Run pipeline — flags only surface after verification passes.</div></div>'; }
+    if(!data.items.length){ el.innerHTML='<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18"/><path d="M5 7h12l-2 3 2 3H5"/></svg></div><b>No flags</b><div class="hint">Run pipeline — flags only surface after verification passes.</div></div>'; }
     else {
       el.innerHTML = data.items.map(f=>{
         const conf = Number(f.final_confidence);
@@ -872,7 +875,7 @@ $('label-next').addEventListener('click', async()=>{
   $('label-pair').innerHTML='<div class="skeleton" style="height:64px"></div>';
   try{
     const data= await api('/api/labels/pending?pool='+pool+'&limit=20');
-    if(!data.items.length){ $('label-pair').innerHTML='<div class="empty"><div class="ill">◎</div><b>No pending pairs</b><div class="hint">Try another pool or run extract/pipeline.</div></div>'; $('label-actions').style.display='none'; state.pendingPair=null; return; }
+    if(!data.items.length){ $('label-pair').innerHTML='<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/><path d="M12 18v2"/><path d="M4 12h2"/><path d="M18 12h2"/></svg></div><b>No pending pairs</b><div class="hint">Try another pool or run extract/pipeline.</div></div>'; $('label-actions').style.display='none'; state.pendingPair=null; return; }
     const p=data.items[0]; state.pendingPair=p;
     $('label-pair').innerHTML = `
       <div style="border-left:3px solid var(--accent);padding:.6rem .7rem;margin:.5rem 0;background:var(--bg2);border-radius:6px"><div class="muted" style="font-size:.76rem">${esc(p.a_doc)} · ${p.a_start}:${p.a_end}</div><div style="font-weight:500">${esc(p.a_text)}</div></div>
@@ -904,7 +907,7 @@ async function loadStaged(){
   try{
     const data= await api('/api/labels/staged?'+params.toString());
     $('staged-total').textContent=`${data.total} total${data.staged_pending!=null? ' · '+data.staged_pending+' pending':''}`;
-    if(!data.items.length){ $('staged-list').innerHTML='<div class="empty"><div class="ill">✓</div><b>Empty queue</b><div class="hint">Staged labels appear here for review.</div></div>'; return; }
+    if(!data.items.length){ $('staged-list').innerHTML='<div class="empty"><div class="ill" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10-10"/></svg></div><b>Empty queue</b><div class="hint">Staged labels appear here for review.</div></div>'; return; }
     $('staged-list').innerHTML = data.items.map(r=> `
       <div class="card" style="margin:.4rem 0;padding:.7rem .85rem;box-shadow:none">
         <div style="display:flex;gap:.4rem;align-items:center"><span class="badge ${r.status==='pending'?'warn':r.status==='approved'?'ok':'err'}">${esc(r.status)}</span> <b>${esc(r.label)}</b> <span class="muted" style="font-size:.78rem;margin-left:auto">${esc(r.labeled_by)} · ${esc((r.created_at||'').slice(0,16))}</span></div>
