@@ -211,7 +211,6 @@
         <b>Ingest</b> → <b>Extract claims</b> (LLM + GLiNER) → <b>Candidates</b> (bge-small + FAISS + entity hybrid, ordered <code>a&lt;b</code>) → <b>Judge</b> (LLM, <code>judge_v1</code>) → <b>Verify</b> (verbatim + fuzzy + entailment) → <b>Flags</b>.
         Dedupe by content hash, ordered pairs prevent duplicates. Flags only surface after <code>overall_pass</code>. See <code>api/settings</code> for live config.
       </p>
-      <p><a href="/report" target="_blank">Open static HTML report →</a> &nbsp;·&nbsp; <a href="/reports/eval.json" target="_blank">eval.json</a> &nbsp;·&nbsp; <a href="https://github.com/anomalyco/opencode" target="_blank">Help</a></p>
     </div>
   </section>
 
