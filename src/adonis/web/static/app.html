@@ -22,16 +22,16 @@
   }
   @media(prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --bg:#020617; --bg2:#0f172a; --card:#0f172a; --bd:#1e293b; --bd2:#334155;
-      --fg:#f1f5f9; --fg2:#cbd5e1; --muted:#94a3b8; --muted2:#64748b;
-      --accent:#e2e8f0; --accent-hover:#f8fafc; --accent2:#60a5fa; --accent2-hover:#3b82f6;
-      --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 12px 32px rgba(0,0,0,.4);
+      --bg:#0a0a0a; --bg2:#141414; --card:#141414; --bd:#27272a; --bd2:#3f3f46;
+      --fg:#fafafa; --fg2:#d4d4d8; --muted:#a1a1aa; --muted2:#71717a;
+      --accent:#fafafa; --accent-hover:#ffffff; --accent2:#60a5fa; --accent2-hover:#3b82f6;
+      --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-lg:0 12px 32px rgba(0,0,0,.5);
     }
   }
   [data-theme="dark"]{
-    --bg:#020617; --bg2:#0f172a; --card:#0f172a; --bd:#1e293b; --bd2:#334155;
-    --fg:#f1f5f9; --fg2:#cbd5e1; --muted:#94a3b8; --muted2:#64748b;
-    --accent:#e2e8f0; --accent-hover:#f8fafc; --accent2:#60a5fa; --accent2-hover:#3b82f6;
+    --bg:#0a0a0a; --bg2:#141414; --card:#141414; --bd:#27272a; --bd2:#3f3f46;
+    --fg:#fafafa; --fg2:#d4d4d8; --muted:#a1a1aa; --muted2:#71717a;
+    --accent:#fafafa; --accent-hover:#ffffff; --accent2:#60a5fa; --accent2-hover:#3b82f6;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -80,7 +80,7 @@
   button:active{transform:translateY(1px)}
   button.primary{background:var(--accent);color:var(--card);border-color:var(--accent);font-weight:600}
   button.primary:hover{background:var(--accent-hover)}
-  [data-theme="dark"] button.primary{color:#0f172a}
+  [data-theme="dark"] button.primary{color:#0a0a0a}
   button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
   button.ghost:hover{background:var(--bg2);color:var(--fg)}
   button.danger{border-color:var(--err-bd);color:var(--err);background:var(--card)}
@@ -122,7 +122,7 @@
   .empty .ill{font-size:2rem;margin-bottom:.5rem;opacity:.9}
   .empty b{color:var(--fg)}
   /* modal */
-  .modal{position:fixed;inset:0;background:rgba(2,6,23,.48);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:30;padding:1rem}
+  .modal{position:fixed;inset:0;background:rgba(10,10,10,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:30;padding:1rem}
   .modal.open{display:flex;animation:fade .15s}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   .modal .sheet{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);max-width:800px;width:100%;max-height:88vh;overflow:auto;padding:1.1rem;box-shadow:var(--shadow-lg)}
@@ -130,7 +130,7 @@
   [data-theme="dark"] .span-hl{background:#422006;color:#fef9c3;border-color:#eab308}
   .page{display:none;animation:fade .18s}
   .page.active{display:block}
-  .toast{position:fixed;bottom:18px;right:18px;background:#0f172a;color:#fff;padding:.65rem .95rem;border-radius:10px;font-size:.85rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.5rem;transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:420px}
+  .toast{position:fixed;bottom:18px;right:18px;background:#141414;color:#fff;padding:.65rem .95rem;border-radius:10px;font-size:.85rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.5rem;transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:420px}
   .toast.show{transform:translateY(0);opacity:1}
   .kbd{font-family:ui-monospace,monospace;font-size:.72rem;padding:.12rem .35rem;border:1px solid var(--bd);border-bottom-width:2px;border-radius:5px;background:var(--card);color:var(--muted)}
   nav button:disabled{opacity:.42;cursor:not-allowed;pointer-events:none}
@@ -502,7 +502,7 @@ async function trySample(){
 function toast(msg, ok=true){
   const t=$('toast');
   t.textContent = (ok?'✓ ':'✗ ') + msg;
-  t.style.background = ok? '#0f172a':'#991b1b';
+  t.style.background = ok? '#141414':'#991b1b';
   t.classList.add('show');
   clearTimeout(t._h);
   t._h=setTimeout(()=>t.classList.remove('show'), 2800);
