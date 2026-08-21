@@ -193,9 +193,9 @@ def _probe(
 ) -> dict[str, object]:
     from adonis.llm.anthropic import DEFAULT_BASE_URL as ANTHROPIC_URL
     from adonis.llm.anthropic import AnthropicClient
+    from adonis.llm.client import LLMClient
     from adonis.llm.openai import DEFAULT_BASE_URL as OPENAI_URL
     from adonis.llm.openai import OpenAIClient
-    from adonis.llm.client import LLMClient
 
     settings = get_settings()
     defaults = PROVIDER_DEFAULTS.get(provider, {})
@@ -515,19 +515,30 @@ def create_app() -> FastAPI:
         apply_migrations()
         settings = get_settings()
         max_bytes = settings.max_upload_mb * 1024 * 1024
+        # Reject too many files early
+        if len(files) > 50:
+            raise HTTPException(status_code=413, detail="too many files (max 50)")
         from adonis.ingest.pipeline import ingest_corpus as do_ingest
 
         conn = get_conn()
-        # We need a temp dir to materialize uploads so ingest pipeline can rglob them
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             saved: list[Path] = []
             total_bytes = 0
             for uf in files:
-                content = await uf.read()
-                total_bytes += len(content)
-                if total_bytes > max_bytes:
-                    raise HTTPException(status_code=413, detail=f"upload exceeds {settings.max_upload_mb} MB limit")
+                # Stream in chunks to avoid OOM; abort early if over limit
+                chunks: list[bytes] = []
+                file_bytes = 0
+                while True:
+                    chunk = await uf.read(1024 * 1024)  # 1MB chunks
+                    if not chunk:
+                        break
+                    file_bytes += len(chunk)
+                    total_bytes += len(chunk)
+                    if file_bytes > max_bytes or total_bytes > max_bytes:
+                        raise HTTPException(status_code=413, detail=f"upload exceeds {settings.max_upload_mb} MB limit")
+                    chunks.append(chunk)
+                content = b"".join(chunks)
                 # Preserve extension for ingest routing
                 fname = Path(uf.filename or "upload.txt").name
                 dest = tmp_path / fname
@@ -747,9 +758,19 @@ def create_app() -> FastAPI:
     def api_ingest(payload: dict | None = None) -> dict[str, object]:  # type: ignore[type-arg]
         apply_migrations()
         settings = get_settings()
-        # If path supplied use it, else corpus_dir
         raw_path = (payload or {}).get("path") if payload else None
         corpus = Path(raw_path) if raw_path else settings.corpus_dir
+        # Sandbox: must be inside corpus_dir (or equal)
+        try:
+            resolved = corpus.resolve()
+            base = settings.corpus_dir.resolve()
+            # Allow base itself or any subpath; reject traversal outside
+            if resolved != base and base not in resolved.parents:
+                raise HTTPException(status_code=403, detail="corpus path outside allowed directory")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid corpus path")
         if not corpus.exists():
             raise HTTPException(status_code=404, detail=f"corpus path not found: {corpus}")
         from adonis.ingest.pipeline import ingest_corpus as do_ingest
@@ -812,7 +833,14 @@ def create_app() -> FastAPI:
 
                 client = _DemoClient()  # type: ignore[no-redef]
             # Reuse the same logic as scripts/extract_claims.run without importing scripts
-            from adonis.db import insert_claim, insert_entity_mention, insert_llm_call, iter_documents, update_claim_entities, upsert_entity
+            from adonis.db import (
+                insert_claim,
+                insert_entity_mention,
+                insert_llm_call,
+                iter_documents,
+                update_claim_entities,
+                upsert_entity,
+            )
             _HAS_NER = False
             _HAS_CLAIMS = False
             try:
@@ -862,7 +890,7 @@ def create_app() -> FastAPI:
                         import re as _r
                         _SENT = _r.compile(r"^([^.!?]*[.!?]|\S[^\n]*)", _r.DOTALL)
                         chunks = _fallback_chunks(raw_text, max_chars or 1200)
-                        from dataclasses import dataclass as _dc2, field as _fld2
+                        from dataclasses import field as _fld2
                         @dataclass
                         class _CR:
                             claim_text: str; span_start: int; span_end: int; topics: list; temporal: dict|None; scope: dict|None; triviality_score: float=0.1
@@ -873,7 +901,7 @@ def create_app() -> FastAPI:
                         for (cs, ce, txt) in chunks:
                             # use demo client if available else naive
                             try:
-                                import json as _js; import re as _re3
+                                import re as _re3
                                 _TR = _re3.compile(r"<text>\n(.*)\n</text>", _re3.DOTALL)
                                 sys_, usr = client.complete_json.__self__ if hasattr(client.complete_json, '__self__') else (None, None)
                             except: pass
@@ -889,10 +917,12 @@ def create_app() -> FastAPI:
                         return claims, es
                     def prompt_version(): return "claims_v1-fallback"  # type: ignore[no-redef]
             import time as _time
-            from datetime import UTC as _UTC, datetime as _dt
 
             # Inline extract run (subset of scripts.extract_claims.run)
-            from dataclasses import dataclass, field as _field
+            from dataclasses import dataclass
+            from dataclasses import field as _field
+            from datetime import UTC as _UTC
+            from datetime import datetime as _dt
 
             @dataclass
             class _Stats:
@@ -975,13 +1005,16 @@ def create_app() -> FastAPI:
         apply_migrations()
         conn = get_conn()
         try:
+            # Cap concurrent jobs (P1 reliability)
+            active = conn.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
+            if int(active) >= 3:
+                raise HTTPException(status_code=429, detail="too many active jobs (max 3)")
             from adonis.db import insert_job
 
             params = {k: v for k, v in req.model_dump().items() if v is not None}
             jid = insert_job(conn, "pipeline", params)
         finally:
             conn.close()
-        # Spawn background thread
         t = threading.Thread(target=_run_job_thread, args=(jid, params), daemon=True)
         t.start()
         return {"job_id": jid, "status": "queued", "params": params}
@@ -1298,8 +1331,8 @@ def create_app() -> FastAPI:
                 path = config.get("path")
                 if not path:
                     raise ValueError("notion connection missing config.path (zip file)")
-                from adonis.ingest.notion import parse_notion_export
                 from adonis.db import insert_document
+                from adonis.ingest.notion import parse_notion_export
 
                 records = parse_notion_export(Path(path))
                 c2 = get_conn()

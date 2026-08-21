@@ -83,6 +83,9 @@ def _looks_like_notion(path: Path) -> bool:
     """A Notion export zip contains markdown pages and/or CSV databases."""
     import zipfile
 
-    with zipfile.ZipFile(path) as zf:
-        names = zf.namelist()
+    try:
+        with zipfile.ZipFile(path) as zf:
+            names = zf.namelist()
+    except zipfile.BadZipFile:
+        return False
     return any(n.endswith((".md", ".markdown", ".csv")) for n in names)

@@ -51,19 +51,17 @@ class Settings(BaseSettings):
     # Embeddings / candidate generation
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     top_k: int = 20
-    triviality_cutoff: float = 0.3
+    triviality_cutoff: float = 0.5  # raised from 0.3 after audit A4
     span_fuzzy_threshold: int = 90
-    candidate_entity_weight: float = 0.3
+    # Canonical weight (PLAN §8). Legacy aliases below are deprecated but kept for compat.
+    similarity_weight: float = 0.7  # weight for embedding cosine in combined score
+    candidate_entity_weight: float = 0.3  # deprecated alias: mirrors 1 - similarity_weight
     judge_per_claim: int = 3
-    candidate_sim_weight: float = 0.7
-    candidate_ent_weight: float = 0.3
-    candidate_min_similarity: float = 0.0
-    candidate_require_entity_overlap: bool = False
-    candidate_intra_doc_dedup: bool = True
-
-    # Candidate pairs (M3): combined = similarity_weight * cosine
-    # + (1 - similarity_weight) * entity_overlap_jaccard.
-    similarity_weight: float = 0.7
+    candidate_sim_weight: float = 0.7  # deprecated alias for similarity_weight
+    candidate_ent_weight: float = 0.3  # deprecated alias for 1 - similarity_weight
+    candidate_min_similarity: float = 0.0  # deprecated: not used
+    candidate_require_entity_overlap: bool = False  # deprecated: not used
+    candidate_intra_doc_dedup: bool = True  # deprecated: dedup now handled via hash
     # Cap on candidate pairs judged per pipeline run (cost guard).
     judge_top_n: int = 50
 
@@ -140,8 +138,15 @@ def save_settings(patch: dict[str, str]) -> Path:
 
     Existing KEY=value lines are updated in place (comments preserved);
     new keys are appended. Missing values (empty string) are ignored so the
-    UI can leave fields blank to keep the current value.
+    UI can leave fields blank to keep the current value. Values containing
+    newlines or leading '=' are rejected to prevent injection.
     """
+    # Validate patch: reject injection characters
+    for k, v in patch.items():
+        if not k.startswith("ADONIS_"):
+            raise ValueError(f"unexpected env key {k!r}")
+        if "\n" in v or "\r" in v:
+            raise ValueError(f"value for {k} contains newline")
     env_path = Path(".env")
     lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
     written: set[str] = set()

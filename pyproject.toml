@@ -45,7 +45,7 @@ testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 files = ["src/adonis"]

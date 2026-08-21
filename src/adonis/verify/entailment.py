@@ -31,7 +31,10 @@ def prompt_version() -> str:
 
 
 def prompt_text() -> str:
-    return (_PROMPTS_DIR / f"{_PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+    p = _PROMPTS_DIR / f"{_PROMPT_VERSION}.txt"
+    if not p.exists():
+        raise FileNotFoundError(f"prompt not found: {p}")
+    return p.read_text(encoding="utf-8")
 
 
 def build_entailment_prompt(span_text: str, claim_text: str) -> tuple[str, str]:

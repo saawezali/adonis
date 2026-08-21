@@ -26,6 +26,9 @@ def parse_notion_export(zip_path: Path) -> list[DocumentRecord]:
         for entry in sorted(zf.namelist()):
             if entry.endswith("/"):
                 continue
+            # Zip slip guard: reject absolute or traversal entries
+            if entry.startswith("/") or ".." in Path(entry).parts:
+                continue
             suffix = Path(entry).suffix.lower()
             if suffix in _MD_SUFFIXES:
                 raw = zf.read(entry).decode("utf-8", errors="replace")

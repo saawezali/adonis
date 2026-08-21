@@ -46,11 +46,71 @@ def apply_migrations() -> None:
         for path in migrations:
             if path.name in already:
                 continue
-            conn.executescript(path.read_text(encoding="utf-8"))
-            conn.execute("INSERT INTO schema_migrations (name) VALUES (?)", (path.name,))
+            try:
+                conn.executescript(path.read_text(encoding="utf-8"))
+            except sqlite3.OperationalError:
+                # Migration 003's backfill SQL may fail on older SQLite; fall back to Python normalization.
+                pass
+            conn.execute("INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)", (path.name,))
             conn.commit()
+        # Post-migration Python fixups (ordering, dedup for 003)
+        _normalize_candidate_pairs(conn)
+        _ensure_flags_unique(conn)
     finally:
         conn.close()
+
+
+def _normalize_candidate_pairs(conn: sqlite3.Connection) -> None:
+    """Ensure candidate_pairs stored with claim_a_id < claim_b_id and dedup."""
+    try:
+        rows = list(conn.execute("SELECT id, claim_a_id, claim_b_id, combined_score FROM candidate_pairs"))
+    except sqlite3.OperationalError:
+        return
+    if not rows:
+        return
+    # Group by unordered pair, keep best.
+    best: dict[tuple[str, str], sqlite3.Row] = {}
+    to_delete: list[str] = []
+    for r in rows:
+        a, b = r["claim_a_id"], r["claim_b_id"]
+        lo, hi = (a, b) if a < b else (b, a)
+        key = (lo, hi)
+        existing = best.get(key)
+        if existing is None or r["combined_score"] > existing["combined_score"]:
+            if existing is not None:
+                to_delete.append(existing["id"])
+            best[key] = r
+        else:
+            to_delete.append(r["id"])
+        # Normalize ordering in-place if needed (only for the kept row, temp)
+    if to_delete:
+        for chunk in _chunked(to_delete, 900):
+            q = ",".join("?" for _ in chunk)
+            conn.execute(f"DELETE FROM candidate_pairs WHERE id IN ({q})", tuple(chunk))
+    # Now fix ordering for remaining rows where a > b
+    for r in best.values():
+        if r["claim_a_id"] > r["claim_b_id"]:
+            conn.execute(
+                "UPDATE candidate_pairs SET claim_a_id=?, claim_b_id=? WHERE id=?",
+                (r["claim_b_id"], r["claim_a_id"], r["id"]),
+            )
+    conn.commit()
+
+
+def _ensure_flags_unique(conn: sqlite3.Connection) -> None:
+    try:
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_flags_candidate ON flags(candidate_pair_id)")
+        # Deduplicate existing flags (keep first)
+        conn.execute(
+            "DELETE FROM flags WHERE id NOT IN (SELECT MIN(id) FROM flags GROUP BY candidate_pair_id)"
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+
+
+def _chunked(seq: list[str], n: int) -> list[list[str]]:
+    return [seq[i : i + n] for i in range(0, len(seq), n)]
 
 
 def insert_document(conn: sqlite3.Connection, record: DocumentRecord) -> bool:
@@ -290,8 +350,10 @@ def insert_candidate_pair(
     strategy: str,
     selected_for_judge: bool = False,
 ) -> bool:
-    """Materialize a candidate pair. Returns True if inserted, False if the
-    (claim_a_id, claim_b_id) pair already exists (UNIQUE constraint)."""
+    """Materialize a candidate pair (ordered). Returns True if inserted."""
+    # Enforce canonical ordering claim_a_id < claim_b_id
+    if claim_a_id > claim_b_id:
+        claim_a_id, claim_b_id = claim_b_id, claim_a_id
     try:
         conn.execute(
             "INSERT INTO candidate_pairs (id, claim_a_id, claim_b_id,"
@@ -443,14 +505,27 @@ def insert_flag(
     final_confidence: float,
     notes: str | None = None,
 ) -> str:
-    """Surface a verified contradiction as a flag. Returns row id."""
+    """Surface a verified contradiction as a flag. Idempotent on pair."""
+    # Enforce uniqueness
+    existing = conn.execute(
+        "SELECT id FROM flags WHERE candidate_pair_id = ?", (candidate_pair_id,)
+    ).fetchone()
+    if existing is not None:
+        return str(existing["id"])
     flag_id = uuid.uuid4().hex
-    conn.execute(
-        "INSERT INTO flags (id, candidate_pair_id, final_label, final_confidence,"
-        " user_decision, user_decision_at, notes)"
-        " VALUES (?, ?, ?, ?, NULL, NULL, ?)",
-        (flag_id, candidate_pair_id, final_label, final_confidence, notes),
-    )
+    try:
+        conn.execute(
+            "INSERT INTO flags (id, candidate_pair_id, final_label, final_confidence,"
+            " user_decision, user_decision_at, notes)"
+            " VALUES (?, ?, ?, ?, NULL, NULL, ?)",
+            (flag_id, candidate_pair_id, final_label, final_confidence, notes),
+        )
+    except sqlite3.IntegrityError:
+        # Race: another insert won
+        row = conn.execute(
+            "SELECT id FROM flags WHERE candidate_pair_id = ?", (candidate_pair_id,)
+        ).fetchone()
+        return str(row["id"]) if row else flag_id
     return flag_id
 
 
@@ -520,76 +595,126 @@ def load_labeled_pairs(conn: sqlite3.Connection) -> list[sqlite3.Row]:
 # Console extensions (002) — jobs / connections / staged labels / documents
 # ---------------------------------------------------------------------------
 
+def _exec_batched(conn: sqlite3.Connection, sql_template: str, ids: list[str], extra_params: tuple[object, ...] = ()) -> int:
+    """Execute DELETE with IN clause in batches of 900 (SQLite var limit)."""
+    if not ids:
+        return 0
+    total = 0
+    for i in range(0, len(ids), 900):
+        chunk = ids[i : i + 900]
+        qmarks = ",".join("?" for _ in chunk)
+        sql = sql_template.format(qmarks=qmarks)
+        cur = conn.execute(sql, (*chunk, *extra_params))
+        total += cur.rowcount
+        # Handle duplicated {qmarks} in template (e.g., claim_a IN (...) OR claim_b IN (...))
+        # For those, caller should pass sql with two placeholders; we handle separately.
+    return total
+
+
+def _delete_claim_pairs(conn: sqlite3.Connection, claim_ids: list[str]) -> list[str]:
+    """Return pair ids involving claim_ids, handling batched IN."""
+    pair_ids: list[str] = []
+    for i in range(0, len(claim_ids), 450):
+        chunk = claim_ids[i : i + 450]
+        qc = ",".join("?" for _ in chunk)
+        rows = conn.execute(
+            f"SELECT id FROM candidate_pairs WHERE claim_a_id IN ({qc}) OR claim_b_id IN ({qc})",
+            (*chunk, *chunk),
+        ).fetchall()
+        pair_ids.extend(r["id"] for r in rows)
+    return pair_ids
+
+
 def delete_document(conn: sqlite3.Connection, document_id: str) -> dict[str, int]:
     """Hard-delete a document row only (per spec: DB row, not original file).
 
     Cascades through claims → entity_mentions / candidate_pairs → judge →
     verification → flags → staged/eval labels linked by doc. Uses FK-aware
-    manual deletes (SQLite FKs not cascaded in schema).
-    Returns counts per table deleted.
+    manual deletes (SQLite FKs not cascaded in schema). Batched to avoid
+    SQLite 999 variable limit. Returns counts per table deleted.
     """
     cur = conn.execute("SELECT id FROM documents WHERE id = ?", (document_id,))
     if cur.fetchone() is None:
         return {"documents": 0}
-    # Collect claim ids for this doc.
     claim_ids = [r["id"] for r in conn.execute("SELECT id FROM claims WHERE document_id = ?", (document_id,))]
     counts: dict[str, int] = {}
     if claim_ids:
-        qmarks = ",".join("?" for _ in claim_ids)
-        # Candidate pairs involving those claims -> collect pair ids.
-        pair_rows = conn.execute(
-            f"SELECT id FROM candidate_pairs WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
-            (*claim_ids, *claim_ids),
-        ).fetchall()
-        pair_ids = [r["id"] for r in pair_rows]
+        pair_ids = _delete_claim_pairs(conn, claim_ids)
         if pair_ids:
-            pq = ",".join("?" for _ in pair_ids)
-            # Judge outputs for those pairs.
-            jo_rows = conn.execute(f"SELECT id FROM judge_outputs WHERE candidate_pair_id IN ({pq})", tuple(pair_ids)).fetchall()
-            jo_ids = [r["id"] for r in jo_rows]
+            # Judge outputs
+            jo_ids: list[str] = []
+            for i in range(0, len(pair_ids), 900):
+                chunk = pair_ids[i : i + 900]
+                qc = ",".join("?" for _ in chunk)
+                rows = conn.execute(f"SELECT id FROM judge_outputs WHERE candidate_pair_id IN ({qc})", tuple(chunk)).fetchall()
+                jo_ids.extend(r["id"] for r in rows)
             if jo_ids:
-                jq = ",".join("?" for _ in jo_ids)
-                vr = conn.execute(f"DELETE FROM verification_results WHERE judge_output_id IN ({jq})", tuple(jo_ids))
-                counts["verification_results"] = vr.rowcount
-                # flags linked to pairs (not jo) — delete via pair ids
-                fg = conn.execute(f"DELETE FROM flags WHERE candidate_pair_id IN ({pq})", tuple(pair_ids))
-                counts["flags"] = fg.rowcount
-                jo_del = conn.execute(f"DELETE FROM judge_outputs WHERE id IN ({jq})", tuple(jo_ids))
-                counts["judge_outputs"] = jo_del.rowcount
+                counts["verification_results"] = _exec_batched(
+                    conn, "DELETE FROM verification_results WHERE judge_output_id IN ({qmarks})", jo_ids
+                )
+                counts["flags"] = _exec_batched(
+                    conn, "DELETE FROM flags WHERE candidate_pair_id IN ({qmarks})", pair_ids
+                )
+                counts["judge_outputs"] = _exec_batched(
+                    conn, "DELETE FROM judge_outputs WHERE id IN ({qmarks})", jo_ids
+                )
             else:
-                # still clean flags even without jo
-                fg = conn.execute(f"DELETE FROM flags WHERE candidate_pair_id IN ({pq})", tuple(pair_ids))
-                counts["flags"] = fg.rowcount
-            # staged labels referencing these claims
-            sl = conn.execute(
-                f"DELETE FROM staged_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
-                (*claim_ids, *claim_ids),
+                counts["flags"] = _exec_batched(
+                    conn, "DELETE FROM flags WHERE candidate_pair_id IN ({qmarks})", pair_ids
+                )
+            # staged/eval batched
+            counts["staged_labels"] = 0
+            for i in range(0, len(claim_ids), 450):
+                chunk = claim_ids[i : i + 450]
+                qc = ",".join("?" for _ in chunk)
+                cur2 = conn.execute(
+                    f"DELETE FROM staged_labels WHERE claim_a_id IN ({qc}) OR claim_b_id IN ({qc})",
+                    (*chunk, *chunk),
+                )
+                counts["staged_labels"] += cur2.rowcount
+            el_total = 0
+            for i in range(0, len(claim_ids), 450):
+                chunk = claim_ids[i : i + 450]
+                qc = ",".join("?" for _ in chunk)
+                cur2 = conn.execute(
+                    f"DELETE FROM eval_labels WHERE claim_a_id IN ({qc}) OR claim_b_id IN ({qc}) OR doc_a_id = ? OR doc_b_id = ?",
+                    (*chunk, *chunk, document_id, document_id),
+                )
+                el_total += cur2.rowcount
+            counts["eval_labels"] = el_total
+            counts["candidate_pairs"] = _exec_batched(
+                conn, "DELETE FROM candidate_pairs WHERE id IN ({qmarks})", pair_ids
             )
-            counts["staged_labels"] = sl.rowcount
-            # eval labels
-            el = conn.execute(
-                f"DELETE FROM eval_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks}) OR doc_a_id = ? OR doc_b_id = ?",
-                (*claim_ids, *claim_ids, document_id, document_id),
-            )
-            counts["eval_labels"] = el.rowcount
-            cp = conn.execute(f"DELETE FROM candidate_pairs WHERE id IN ({pq})", tuple(pair_ids))
-            counts["candidate_pairs"] = cp.rowcount
         else:
             # no pairs, but still staged/eval
-            sl = conn.execute(
-                f"DELETE FROM staged_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks})",
-                (*claim_ids, *claim_ids),
-            )
-            counts["staged_labels"] = sl.rowcount
-            el = conn.execute(
-                f"DELETE FROM eval_labels WHERE claim_a_id IN ({qmarks}) OR claim_b_id IN ({qmarks}) OR doc_a_id = ? OR doc_b_id = ?",
-                (*claim_ids, *claim_ids, document_id, document_id),
-            )
-            counts["eval_labels"] = el.rowcount
+            counts["staged_labels"] = 0
+            for i in range(0, len(claim_ids), 450):
+                chunk = claim_ids[i : i + 450]
+                qc = ",".join("?" for _ in chunk)
+                cur2 = conn.execute(
+                    f"DELETE FROM staged_labels WHERE claim_a_id IN ({qc}) OR claim_b_id IN ({qc})",
+                    (*chunk, *chunk),
+                )
+                counts["staged_labels"] += cur2.rowcount
+            el_total = 0
+            for i in range(0, len(claim_ids), 450):
+                chunk = claim_ids[i : i + 450]
+                qc = ",".join("?" for _ in chunk)
+                cur2 = conn.execute(
+                    f"DELETE FROM eval_labels WHERE claim_a_id IN ({qc}) OR claim_b_id IN ({qc}) OR doc_a_id = ? OR doc_b_id = ?",
+                    (*chunk, *chunk, document_id, document_id),
+                )
+                el_total += cur2.rowcount
+            counts["eval_labels"] = el_total
         # entity_mentions
-        em = conn.execute(f"DELETE FROM entity_mentions WHERE claim_id IN ({qmarks})", tuple(claim_ids))
-        counts["entity_mentions"] = em.rowcount
-        cl = conn.execute(f"DELETE FROM claims WHERE document_id = ?", (document_id,))
+        em_total = 0
+        for i in range(0, len(claim_ids), 900):
+            chunk = claim_ids[i : i + 900]
+            qc = ",".join("?" for _ in chunk)
+            cur2 = conn.execute(f"DELETE FROM entity_mentions WHERE claim_id IN ({qc})", tuple(chunk))
+            em_total += cur2.rowcount
+        counts["entity_mentions"] = em_total
+        cl = conn.execute("DELETE FROM claims WHERE document_id = ?", (document_id,))
         counts["claims"] = cl.rowcount
     # staged/eval that reference doc directly even without claims (defensive)
     if "staged_labels" not in counts:
@@ -601,6 +726,10 @@ def delete_document(conn: sqlite3.Connection, document_id: str) -> dict[str, int
     counts["documents"] = doc.rowcount
     conn.commit()
     return counts
+
+
+def _escape_like(s: str) -> str:
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def list_documents(
@@ -615,8 +744,8 @@ def list_documents(
     where: list[str] = []
     params: list[object] = []
     if q:
-        where.append("(title LIKE ? OR raw_text LIKE ? OR path LIKE ?)")
-        like = f"%{q}%"
+        where.append("(title LIKE ? ESCAPE '\\' OR raw_text LIKE ? ESCAPE '\\' OR path LIKE ? ESCAPE '\\')")
+        like = f"%{_escape_like(q)}%"
         params.extend([like, like, like])
     if source:
         where.append("source = ?")

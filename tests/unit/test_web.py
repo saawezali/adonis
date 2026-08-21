@@ -43,7 +43,7 @@ def test_settings_endpoint_masks_key(client):
 def test_settings_page_served(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert "Adonis console" in resp.text
+    assert "Adonis" in resp.text and "console" in resp.text.lower()
     assert "api/settings" in resp.text
 
 

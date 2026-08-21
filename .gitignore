@@ -11,6 +11,8 @@ build/
 data/db/
 data/corpus/
 reports/*.html
+reports/eval.json
+reports/*.json
 
 # Tool caches
 .pytest_cache/

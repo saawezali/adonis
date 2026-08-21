@@ -54,7 +54,10 @@ class ExtractionStats:
 
 def prompt_text() -> str:
     """Return the current claim-extraction system prompt."""
-    return (_PROMPTS_DIR / f"{_PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+    p = _PROMPTS_DIR / f"{_PROMPT_VERSION}.txt"
+    if not p.exists():
+        raise FileNotFoundError(f"prompt not found: {p} (run from repo root or check install)")
+    return p.read_text(encoding="utf-8")
 
 
 def prompt_version() -> str:
@@ -105,7 +108,12 @@ def _is_declarative(claim_text: str) -> bool:
         return False
     if text.endswith(("?", "!")):
         return False
-    return not text[0].islower()
+    # Strip leading quotes/brackets/digits before checking capitalization
+    stripped = text.lstrip("\"'“”‘’([{")
+    # Allow non-letter starts (digits, etc.)
+    if stripped and stripped[0].isalpha():
+        return not stripped[0].islower()
+    return True
 
 
 def _is_trivial(
@@ -115,7 +123,8 @@ def _is_trivial(
     score = raw.get("triviality_score")
     if isinstance(score, (int, float)) and score >= cutoff:
         return True
-    if len(claim_text.strip()) < 15:
+    # Only drop extremely short claims; 10 chars is safe lower bound
+    if len(claim_text.strip()) < 10:
         return True
     return bool(_TRIVIAL_RE.search(span_text))
 
@@ -213,6 +222,7 @@ def extract_document_claims(
     chunks = chunk_document(raw_text, max_chars=max_chars)
     stats = ExtractionStats(chunks=len(chunks), llm_calls=0)
     claims: list[ClaimRecord] = []
+    seen: set[str] = set()
     for chunk in chunks:
         chunk_claims, chunk_stats = extract_claims_from_chunk(
             client, chunk, cutoff=cutoff
@@ -222,7 +232,13 @@ def extract_document_claims(
         stats.span_dropped += chunk_stats.span_dropped
         stats.shape_dropped += chunk_stats.shape_dropped
         stats.errors.extend(chunk_stats.errors)
-        claims.extend(chunk_claims)
+        for cl in chunk_claims:
+            # Intra-doc dedup on normalized claim_text (PLAN §1.7)
+            key = cl.claim_text.strip().lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            claims.append(cl)
     stats.claims_from_llm = len(claims)
     return claims, stats
 

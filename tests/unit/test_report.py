@@ -57,9 +57,11 @@ def _seed(tmp_env) -> None:
             similarity_score=0.9, entity_overlap=1.0, combined_score=0.93,
             strategy="hybrid", selected_for_judge=True,
         )
+        # Ordered storage: handle either order
+        lo, hi = (c_a, c_b) if c_a < c_b else (c_b, c_a)
         pair_id = conn.execute(
             "SELECT id FROM candidate_pairs WHERE claim_a_id = ? AND claim_b_id = ?",
-            (c_a, c_b),
+            (lo, hi),
         ).fetchone()["id"]
         judge_id = insert_judge_output(
             conn, candidate_pair_id=pair_id, label="genuine_contradiction",

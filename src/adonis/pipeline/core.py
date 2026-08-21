@@ -95,9 +95,18 @@ def _claim_view(row: sqlite3.Row, side: str) -> ClaimView:
 
 def _span_text(row: sqlite3.Row, side: str, result: JudgeResult) -> str:
     prefix = "a" if side == "a" else "b"
-    span_start = row[f"span_{prefix}_start"] + getattr(result, f"span_{prefix}_start")
-    span_end = row[f"span_{prefix}_start"] + getattr(result, f"span_{prefix}_end")
+    doc_start = int(row[f"span_{prefix}_start"])
+    claim_len = len(str(row[f"text_{prefix}"]))
+    rel_start = int(getattr(result, f"span_{prefix}_start"))
+    rel_end = int(getattr(result, f"span_{prefix}_end"))
+    # Validate relative spans within claim (already done in judge) and absolute within doc
+    if rel_start < 0 or rel_end > claim_len or rel_end <= rel_start:
+        return ""
+    span_start = doc_start + rel_start
+    span_end = doc_start + rel_end
     raw = str(row[f"raw_{prefix}"])
+    if span_start < 0 or span_end > len(raw) or span_end <= span_start:
+        return ""
     return raw[span_start:span_end]
 
 

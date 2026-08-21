@@ -16,9 +16,7 @@ explains what to configure.
 
 from __future__ import annotations
 
-import json
 import os
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,14 +35,18 @@ def is_configured() -> bool:
     return bool(s.google_client_id and s.google_client_secret)
 
 
-def auth_url(state: str = "adonis") -> str:
-    """Build the Google OAuth consent URL for Drive readonly."""
+def auth_url(state: str | None = None) -> str:
+    """Build the Google OAuth consent URL for Drive readonly. Random state if not supplied."""
+    import secrets as _secrets
+
     s = get_settings()
     if not s.google_client_id:
         raise RuntimeError("ADONIS_GOOGLE_CLIENT_ID not set — add it in Settings → Connections")
     redirect = s.google_redirect_uri or "http://127.0.0.1:8000/api/connections/drive/callback"
     from urllib.parse import urlencode
 
+    if state is None:
+        state = _secrets.token_urlsafe(16)
     params = {
         "client_id": s.google_client_id,
         "redirect_uri": redirect,
@@ -103,9 +105,10 @@ def sync_drive(conn_row_id: str | None = None, *, max_files: int = 100) -> SyncR
 
 def _sync_inner(*, max_files: int = 100) -> SyncResult:
     import httpx
+
     from adonis.db import get_conn, insert_document
     from adonis.ingest.base import DocumentRecord
-    from adonis.normalize.text import content_hash, normalize_text
+    from adonis.normalize.text import normalize_text
 
     s = get_settings()
     # Tokens from .env or env var
@@ -114,10 +117,23 @@ def _sync_inner(*, max_files: int = 100) -> SyncResult:
     if not refresh and not access:
         return SyncResult(errors=["not authenticated — connect Drive in Connections tab"])
 
-    # Refresh access token if needed
+    # Refresh access token if needed; persist new token
     if refresh and not access:
         tok = _refresh_access_token(refresh)
         access = tok.get("access_token", "")
+        if access and tok.get("refresh_token"):
+            # Some flows return rotated refresh_token; persist
+            try:
+                from adonis.config import save_settings
+
+                save_settings(
+                    {
+                        "ADONIS_GOOGLE_ACCESS_TOKEN": access,
+                        "ADONIS_GOOGLE_REFRESH_TOKEN": tok.get("refresh_token", refresh),
+                    }
+                )
+            except Exception:
+                pass
 
     if not access:
         return SyncResult(errors=["no access token — re-authenticate"])
@@ -129,9 +145,15 @@ def _sync_inner(*, max_files: int = 100) -> SyncResult:
     params = {"q": f"trashed=false and ({mime_q})", "pageSize": max_files, "fields": "files(id,name,mimeType,modifiedTime)"}
     resp = httpx.get("https://www.googleapis.com/drive/v3/files", headers=headers, params=params, timeout=20)
     if resp.status_code == 401 and refresh:
-        # try once more after refresh
         tok = _refresh_access_token(refresh)
         access = tok.get("access_token", "")
+        if access:
+            try:
+                from adonis.config import save_settings
+
+                save_settings({"ADONIS_GOOGLE_ACCESS_TOKEN": access})
+            except Exception:
+                pass
         headers = {"Authorization": f"Bearer {access}"}
         resp = httpx.get("https://www.googleapis.com/drive/v3/files", headers=headers, params=params, timeout=20)
     resp.raise_for_status()
@@ -161,7 +183,7 @@ def _sync_inner(*, max_files: int = 100) -> SyncResult:
                     result.inserted += 1
                 else:
                     result.changed += 0  # deduped
-            except Exception as exc:  # noqa: BLE001, PERF203
+            except Exception as exc:  # noqa: BLE001
                 result.errors.append(f"{name}: {exc!r}")
     finally:
         conn.close()

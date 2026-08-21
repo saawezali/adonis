@@ -49,6 +49,7 @@ class CandidateStats:
     candidates: int = 0
     embedding_pairs: int = 0
     entity_pairs: int = 0
+    hybrid_pairs: int = 0
     intra_doc_skipped: int = 0
     duplicate_skipped: int = 0
     errors: list[str] = field(default_factory=list)
@@ -167,6 +168,7 @@ def build_candidate_rows(
     stats.candidates = len(rows)
     stats.embedding_pairs = sum(1 for p in rows if p.strategy == "embedding")
     stats.entity_pairs = sum(1 for p in rows if p.strategy == "entity")
+    stats.hybrid_pairs = sum(1 for p in rows if p.strategy == "hybrid")
 
     # 3) Selection for the judge: top N per claim by combined score.
     per_claim: dict[str, list[CandidatePairRow]] = {}

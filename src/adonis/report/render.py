@@ -86,7 +86,12 @@ def render_report(conn: sqlite3.Connection, out_path: Path) -> Path:
 def _file_url(path: str | None, title: str) -> str:
     if not path:
         return "#"
-    # file:// link to the original doc; fall back to the title when missing.
+    if path.startswith("gdrive://"):
+        # Drive sync paths: link to Drive file if possible
+        fid = path.split("/")[2] if "/" in path else ""
+        if fid:
+            return f"https://drive.google.com/file/d/{fid}/view"
+        return "#"
     try:
         return f"file://{pathname2url(str(Path(path).resolve()))}"
     except (OSError, ValueError):
