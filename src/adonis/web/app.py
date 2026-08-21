@@ -793,6 +793,39 @@ def create_app() -> FastAPI:
         finally:
             conn.close()
 
+    @app.post("/api/sample")
+    def api_sample() -> dict[str, object]:
+        """Generate synthetic sample corpus (MIT) and ingest it — for first-run onboarding."""
+        apply_migrations()
+        settings = get_settings()
+        # Reuse generator logic inline to avoid import cycle
+        sample_files = {
+            "01_roadmap.md": "# Roadmap — Project Atlas\n\nAtlas ships in March.\n\nAtlas is our flagship product.\n\nThe launch budget is 500 euros.\n\nOnboarding is required for EU customers.\n",
+            "02_finance.md": "# Finance — Atlas Budget\n\nAtlas ships in July.\n\nThe launch budget is 600 euros.\n\nOnboarding is required for US customers.\n",
+            "03_product.md": "# Product — Atlas Overview\n\nAtlas is our flagship product.\n\nWe are considering a hiring freeze for Q3.\n",
+            "04_ops_eu.md": "# Ops — EU Rollout\n\nOnboarding is required for EU customers.\n\nSupport window is 9am–5pm CET.\n",
+            "05_ops_us.md": "# Ops — US Rollout\n\nOnboarding is required for US customers.\n\nSupport window is 9am–5pm EST.\n",
+        }
+        out = settings.corpus_dir / "sample"
+        out.mkdir(parents=True, exist_ok=True)
+        for name, text in sample_files.items():
+            (out / name).write_text(text, encoding="utf-8")
+        from adonis.ingest.pipeline import ingest_corpus as do_ingest
+        conn = get_conn()
+        try:
+            stats = do_ingest(out, conn)
+            stats.doc_count = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+            return {
+                "sample_dir": str(out),
+                "files_seen": stats.files_seen,
+                "inserted": stats.inserted,
+                "duplicates": stats.duplicates,
+                "documents_in_store": stats.doc_count,
+                "note": "Synthetic MIT sample — expected demo flags: genuine_contradiction (March vs July) + different_scope (EU vs US)",
+            }
+        finally:
+            conn.close()
+
     @app.post("/api/extract")
     def api_extract(req: ExtractRequest) -> dict[str, object]:
         apply_migrations()

@@ -133,6 +133,9 @@
   .toast{position:fixed;bottom:18px;right:18px;background:#0f172a;color:#fff;padding:.65rem .95rem;border-radius:10px;font-size:.85rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.5rem;transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:420px}
   .toast.show{transform:translateY(0);opacity:1}
   .kbd{font-family:ui-monospace,monospace;font-size:.72rem;padding:.12rem .35rem;border:1px solid var(--bd);border-bottom-width:2px;border-radius:5px;background:var(--card);color:var(--muted)}
+  nav button:disabled{opacity:.42;cursor:not-allowed;pointer-events:none}
+  .progress{height:6px;background:var(--bg2);border:1px solid var(--bd);border-radius:999px;overflow:hidden}
+  .progress-fill{height:100%;background:var(--accent2);width:0%;transition:width .2s}
   .help{position:fixed;bottom:18px;left:18px;background:var(--card);border:1px solid var(--bd);padding:.5rem .7rem;border-radius:999px;font-size:.78rem;color:var(--muted);box-shadow:var(--shadow)}
 </style>
 </head>
@@ -184,6 +187,11 @@
         </div>
       </div>
     </div>
+      <div style="margin-top:.8rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <button class="primary" onclick="trySample()" id="try-sample-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Try sample data (5 files)</button>
+        <span class="hint">Creates <code>data/corpus/sample</code> + ingests — no API key needed. Expected demo: March vs July contradiction.</span>
+      </div>
+    </div>
 
     <div class="grid cols2" style="margin-top:.9rem">
       <div class="card">
@@ -224,6 +232,7 @@
         <p><b>Drop files here</b> or <label for="file-input" style="display:inline;color:var(--accent2);cursor:pointer;text-decoration:underline">browse</label></p>
         <input id="file-input" type="file" multiple accept=".md,.txt,.docx,.zip,.markdown,.csv" style="display:none">
         <p class="hint">Max <span id="upload-limit">100</span> MB per request (streamed 1 MB chunks) · zip-slip + traversal blocked · max 50 files</p>
+        <div id="upload-progress" style="display:none;margin-top:.7rem"><div class="progress"><div id="upload-progress-fill" class="progress-fill"></div></div><div id="upload-progress-text" class="hint" style="text-align:center;margin-top:.25rem">0%</div></div>
       </div>
       <div class="toolbar">
         <input id="doc-q" placeholder="Search title / path / text… ( / )" aria-label="Search documents">
@@ -479,6 +488,17 @@ $('theme-toggle').addEventListener('click', ()=>{
   localStorage.setItem('adonis-theme', next);
 });
 
+function updateNavGating(st){
+  const flagsBtn = document.querySelector('button[data-page="flags"]');
+  const evalBtn = document.querySelector('button[data-page="eval"]');
+  if(flagsBtn){ const need = st.flags===0 && st.documents===0; flagsBtn.disabled = st.documents===0 && st.claims===0; flagsBtn.title = flagsBtn.disabled ? "Add documents & run pipeline first" : ""; }
+  if(evalBtn){ evalBtn.disabled = st.documents===0 && st.eval_labels===0 && (st.staged_pending||0)===0; evalBtn.title = evalBtn.disabled ? "Label pairs after pipeline" : ""; }
+}
+async function trySample(){
+  const btn=$('try-sample-btn'); if(btn) btn.disabled=true;
+  toast('Creating sample corpus…');
+  try{ const out=await api('/api/sample',{method:'POST'}); toast(`Sample ready: ${out.inserted} new docs`); loadDocs(); loadDashboard(); }catch(e){ toast(String(e.message),false); } finally{ if(btn) btn.disabled=false; }
+}
 function toast(msg, ok=true){
   const t=$('toast');
   t.textContent = (ok?'✓ ':'✗ ') + msg;
@@ -541,6 +561,7 @@ async function loadSettings(){
     <div class="card" style="padding:.9rem"><div class="muted">Flags</div><div class="kpi">${st.flags} <small>verified</small></div><div class="hint">only verified surface</div></div>
     <div class="card" style="padding:.9rem"><div class="muted">Staged labels</div><div class="kpi">${st.staged_pending||0} pending <small>/ ${st.eval_labels} approved</small></div></div>`;
   state.dashboard=st;
+  try{ updateNavGating(st); }catch{}
   // upload limit hint
   try{ const lim = st.max_upload_mb || 100; $('upload-limit').textContent = String(lim); }catch{}
 }
@@ -660,14 +681,23 @@ async function doUpload(fileList){
   const fd=new FormData();
   for(const f of fileList) fd.append('files', f, f.name);
   $('doc-out').style.display='block'; $('doc-out').textContent='Uploading '+fileList.length+' file(s)…';
+  const prog=$('upload-progress'), fill=$('upload-progress-fill'), txt=$('upload-progress-text');
+  if(prog){ prog.style.display='block'; fill.style.width='0%'; txt.textContent='0%'; }
   try{
-    const res = await fetch('/api/documents/upload', {method:'POST', body:fd});
-    const body=await res.json();
-    if(!res.ok) throw new Error(body.detail||res.statusText);
+    const body = await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/documents/upload');
+      xhr.upload.onprogress = (e)=>{ if(e.lengthComputable && prog){ const pct=Math.round(e.loaded/e.total*100); fill.style.width=pct+'%'; txt.textContent=pct+'%'; } };
+      xhr.onload = ()=>{ try{ const j=JSON.parse(xhr.responseText||'{}'); if(xhr.status>=200 && xhr.status<300) resolve(j); else reject(new Error(j.detail||xhr.statusText)); }catch(err){ reject(err); } };
+      xhr.onerror = ()=> reject(new Error('Upload failed'));
+      xhr.send(fd);
+    });
+    if(prog) fill.style.width='100%';
     $('doc-out').textContent=JSON.stringify(body,null,2);
     toast(`Ingested ${body.inserted} new docs (${body.files_seen} files)`);
     loadDocs(); loadDashboard();
   }catch(e){ $('doc-out').textContent=String(e.message||e); toast(String(e.message), false); }
+  finally{ setTimeout(()=>{ if(prog) prog.style.display='none'; }, 800); }
 }
 
 /* Connections */
