@@ -1,4 +1,4 @@
-"""Final flag confidence calibration (PLAN.md M4).
+"""Final flag confidence calibration.
 
 A logistic regression is fit on eval-labeled pairs: features are the
 judge's raw confidence and the candidate combined score; the target is

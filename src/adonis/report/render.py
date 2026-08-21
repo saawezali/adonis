@@ -1,4 +1,4 @@
-"""Static HTML report over flags (PLAN.md M4).
+"""Static HTML report over flags.
 
 Renders reports/index.html from the flags table plus context (pairs,
 claims, documents, verification), sorted by final_confidence desc so the

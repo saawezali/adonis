@@ -1,4 +1,4 @@
-"""Entity canonicalization: mention strings -> entity clusters (PLAN.md M2).
+"""Entity canonicalization: mention strings -> entity clusters.
 
 Clustering is deterministic and local: exact normalized-string groups first,
 then greedy merge of clusters whose canonical names are fuzzy-close (rapidfuzz)

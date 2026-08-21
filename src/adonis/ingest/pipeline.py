@@ -2,7 +2,7 @@
 
 Walks a corpus directory, dispatches each file to the right adapter by
 extension, and writes DocumentRecords into the store. Tracks per-file outcome
-so parse-failure rate is visible (per PLAN.md acceptance for M1).
+so parse-failure rate is visible (per design spec acceptance for M1).
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def _ingest_file(path: Path, conn: sqlite3.Connection, stats: IngestStats) -> No
         else:
             stats.ignored += 1
     # One bad file must not kill the run; it is counted and reported instead.
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         stats.failed += 1
         stats.errors.append(f"{path}: {exc!r}")
 

@@ -1,6 +1,6 @@
 """Provider-independent LLM client interface.
 
-Per PLAN.md: provider-independent. Two tiers are configured independently
+Per design spec: provider-independent. Two tiers are configured independently
 (extractor: cheap/fast; judge: larger/smarter). Concrete adapters implement
 LLMClient; the choice is per tier (ADONIS_EXTRACTOR_PROVIDER /
 ADONIS_JUDGE_PROVIDER, falling back to ADONIS_LLM_PROVIDER) and loaded

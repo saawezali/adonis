@@ -1,4 +1,4 @@
-"""Citation span verification, lexical part (PLAN.md M4).
+"""Citation span verification, lexical part.
 
 Checks that the judge's cited span text actually matches the claim it is
 supposed to support: a normalized verbatim comparison plus a rapidfuzz

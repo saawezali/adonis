@@ -1,4 +1,4 @@
-"""Run the judge over the curated trick set (PLAN.md M3).
+"""Run the judge over the curated trick set.
 
 Each pair in data/eval/trick_set.jsonl states the label the §1.4 decision
 rules require. Without --llm a deterministic DemoJudge is used (exercises

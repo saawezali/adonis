@@ -29,7 +29,7 @@ def _model_for_tier(tier: str) -> str:
 def _payload_text(response: httpx.Response, limit: int = 300) -> str:
     try:
         body = response.text
-    except Exception:  # noqa: BLE001 - defensive read
+    except Exception:
         body = "<unreadable body>"
     return body[:limit] if body else "<empty body>"
 

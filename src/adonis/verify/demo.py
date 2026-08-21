@@ -1,4 +1,4 @@
-"""Deterministic offline verifier for the entailment pass (PLAN.md M4).
+"""Deterministic offline verifier for the entailment pass.
 
 Mirrors DemoJudge: parses the entailment prompt back into span + claim and
 scores support lexically (verbatim => 1.0, else normalized fuzzy ratio).

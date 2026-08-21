@@ -1,4 +1,4 @@
-"""Zero-shot NER over claim spans with GLiNER (PLAN.md M2).
+"""Zero-shot NER over claim spans with GLiNER.
 
 GLiNER is loaded lazily (first call downloads the model unless it is
 cached); callers may inject any object exposing

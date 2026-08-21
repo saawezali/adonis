@@ -1,4 +1,4 @@
-"""Eval report: metrics over the labeled set (PLAN.md M5).
+"""Eval report: metrics over the labeled set.
 
 Loads eval_labels + judge outputs + verification from the store, prints a
 per-category P/R/F1 table plus micro/macro averages, detection rates, and

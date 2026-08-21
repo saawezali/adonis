@@ -1,6 +1,6 @@
 """SQLite connection helpers + schema creation.
 
-Per PLAN.md section 4. The schema is applied by migrations/apply.py (idempotent),
+Per design spec section 4. The schema is applied by migrations/apply.py (idempotent),
 which sources migrations/*.sql in order. Clients use get_conn() and never touch
 the sqlite3 module directly.
 """

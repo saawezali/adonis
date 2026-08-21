@@ -98,7 +98,7 @@ def sync_drive(conn_row_id: str | None = None, *, max_files: int = 100) -> SyncR
     result = SyncResult()
     try:
         return _sync_inner(max_files=max_files)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         result.errors.append(f"{type(exc).__name__}: {exc}")
         return result
 
@@ -183,7 +183,7 @@ def _sync_inner(*, max_files: int = 100) -> SyncResult:
                     result.inserted += 1
                 else:
                     result.changed += 0  # deduped
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 result.errors.append(f"{name}: {exc!r}")
     finally:
         conn.close()

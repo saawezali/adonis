@@ -1,4 +1,4 @@
-"""Render the HTML flags report (PLAN.md M4).
+"""Render the HTML flags report.
 
 Reads flags + verification from the store and writes reports/index.html.
 See src/adonis/report/render.py for details.

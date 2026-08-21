@@ -4,7 +4,7 @@
 
 > Finds where two documents make conflicting claims about the same entity, with citation-grounded explanations — not just a flag. Local-first, provider-independent, built to show real AI systems engineering rather than a thin LLM wrapper.
 
-`PLAN.md` is the source of truth for design decisions, schema, and the §9–12 audit/remediation log. This README is the operational guide.
+This README is the operational guide — install, configure, run, and evaluate.
 
 ---
 
@@ -18,7 +18,7 @@
 * Verifies citations **lexically** (verbatim+fuzzy) and **semantically** (LLM entailment); only verified pairs become **flags**.
 * Calibrates confidence (logistic regression on labeled pairs, heuristic fallback) and renders a sortable **HTML report** plus a full **local console** for triage.
 
-### Taxonomy (non-binary by design — PLAN §1.4)
+### Taxonomy (non-binary by design)
 
 | Condition (same entity/attribute) | Label |
 |---|---|
@@ -46,7 +46,7 @@ All stages are pure functions over SQLite tables, materialized so `recall@K` and
 
 ---
 
-## 3. Tech stack (PLAN §2 + §11 addendum)
+## 3. Tech stack
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -57,7 +57,7 @@ All stages are pure functions over SQLite tables, materialized so `recall@K` and
 | Vector search | `faiss-cpu` `IndexFlatIP` (switch to `IVFFlat` >50k claims — documented, not yet auto) |  |
 | Store | SQLite (`sqlite3` + versioned `src/adonis/migrations/*.sql`) | `001_init` + `002_ui_console` (`jobs`, `connections`, `staged_labels`) + `003_fix_uniqueness` (ordered pairs, flag uniqueness) |
 | Report | `Jinja2` → `reports/index.html` |  |
-| Web console | `FastAPI` + `Uvicorn` + `python-multipart` | M6 beyond PLAN — Dashboard/Documents/Connections/Pipeline/Flags/Eval/Settings |
+| Web console | `FastAPI` + `Uvicorn` + `python-multipart` | Dashboard / Documents / Connections / Pipeline / Flags / Eval / Settings |
 | Docs | `python-docx` | Drive `.docx` |
 | Config | `pydantic-settings` (`ADONIS_*` in `.env`) | typed, validated at startup, `chmod 600` |
 | Quality | `pytest` + `ruff` + `mypy --strict` (`python_version 3.11`) | 164 tests |
@@ -69,7 +69,6 @@ All stages are pure functions over SQLite tables, materialized so `recall@K` and
 ```
 adonis/
 ├── README.md
-├── PLAN.md                         # design + §9-12 audit
 ├── pyproject.toml / Makefile / .env.example
 ├── data/
 │   ├── corpus/                     # gitignored — put your exports here
@@ -196,7 +195,7 @@ python scripts/measure_recall.py              # recall@5/10/20/50
 python scripts/eval_report.py                 # → reports/eval.json
 ```
 
-Demo judge applies the coarse §1.4 branches and therefore may overshoot — run the trick set to see verification catch it: `python scripts/eval_trick_set.py`.
+Demo judge applies coarse decision branches and therefore may overshoot — run the trick set to see verification catch it: `python scripts/eval_trick_set.py`.
 
 ### B) Real LLM (needs `.env`)
 
@@ -299,7 +298,7 @@ Migrations are idempotent (`schema_migrations`): `apply_migrations()` also backf
 
 ---
 
-## 14. Out of scope (PLAN §7)
+## 14. Out of scope
 
 Multi-relation evidence graph, incremental file-watch, cross-corpus entity linking, active learning, multi-user/hosted, revision history, cross-language, fine-tuning.
 
@@ -307,8 +306,8 @@ Multi-relation evidence graph, incremental file-watch, cross-corpus entity linki
 
 ## 15. Further reading
 
-* `PLAN.md` — full critique, decisions, schema DDL, milestone demos, risks, and §9–12 audit.
-* `adonis.md` — original brief (planning deliverables).
-* `MIGRATIONS.md` — `src/adonis/migrations/*.sql` comments + `apply.py`.
+* `src/adonis/migrations/*.sql` — schema and comments (`apply.py`).
+* `src/adonis/web/static/app.html` — console UI and API wiring.
+* `LICENSE` — MIT.
 
-License: portfolio project — treat as MIT for review purposes unless otherwise noted.
+License: MIT — see `LICENSE`.

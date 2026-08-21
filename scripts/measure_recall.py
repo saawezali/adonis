@@ -1,4 +1,4 @@
-"""Measure candidate recall against human eval labels (PLAN.md M3).
+"""Measure candidate recall against human eval labels.
 
 For every labeled contradiction-ish pair (eval_labels), checks whether the
 pair was materialized as a candidate and where it ranks by combined_score

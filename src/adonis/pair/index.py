@@ -1,6 +1,6 @@
-"""FAISS index over claim embeddings (PLAN.md M3).
+"""FAISS index over claim embeddings.
 
-IndexFlatIP (exact inner-product search) is the default per PLAN.md section 8;
+IndexFlatIP (exact inner-product search) is the default per design spec section 8;
 switch to IVFFlat only if claim count exceeds ~50k. All vectors are L2-
 normalized upstream, so inner product == cosine similarity.
 """

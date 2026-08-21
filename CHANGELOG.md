@@ -16,8 +16,8 @@ All notable changes to Adonis. Format: [Keep a Changelog](https://keepachangelog
 * `adonis` / `adonis-doctor` entry points, `Dockerfile` + `docker-compose.yml`, `adonis.spec` (PyInstaller), synthetic sample generator (`scripts/generate_sample_corpus.py`).
 
 ### Fixed
-* Audit §§9–12: 30 findings remediated (candidate `a<b`, flag uniqueness, span bounds, declarative/triviality, micro semantics, gdrive URL).
+* 30 audit findings remediated (candidate `a<b`, flag uniqueness, span bounds, declarative/triviality, micro semantics, gdrive URL).
 * Upload streaming, path sandbox, batch deletes, OAuth state, drive token persist, hybrid stats.
 
 ## [0.0.1] — initial scaffolding
-* Repo + `PLAN.md` M1–M5 milestones.
+* Repo + milestones M1–M5 scaffolding.

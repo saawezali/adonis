@@ -1,6 +1,6 @@
 """LLM claim extraction (prompt claims_v1).
 
-Per PLAN.md M2: atomic claims in declarative form, with citation spans,
+Per design spec M2: atomic claims in declarative form, with citation spans,
 temporal/scope properties and a triviality score. Pipeline here:
 chunk document -> per-chunk LLM call -> validate spans -> apply the
 triviality filter. Trivial or invalid claims are dropped and counted.
@@ -199,7 +199,7 @@ def extract_claims_from_chunk(
     system, user = build_claim_prompt(chunk.text)
     try:
         response = client.complete_json(system, user, max_tokens=max_tokens)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         stats.errors.append(f"chunk {chunk.start}: LLM call failed: {exc!r}")
         return [], stats
     claims = _claims_from_llm_response(response, chunk, cutoff, stats)
@@ -233,7 +233,7 @@ def extract_document_claims(
         stats.shape_dropped += chunk_stats.shape_dropped
         stats.errors.extend(chunk_stats.errors)
         for cl in chunk_claims:
-            # Intra-doc dedup on normalized claim_text (PLAN §1.7)
+            # Intra-doc dedup on normalized claim_text
             key = cl.claim_text.strip().lower()
             if key in seen:
                 continue

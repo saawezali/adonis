@@ -1,4 +1,4 @@
-"""Citation span entailment verification via LLM (PLAN.md M4).
+"""Citation span entailment verification via LLM.
 
 For each judge-cited span, re-ask the model whether the span text actually
 supports the claim it was cited for. Returns an entailment score in 0..1
@@ -76,7 +76,7 @@ def verify_entailment(
     system, user = build_entailment_prompt(span_text, claim_text)
     try:
         response = client.complete_json(system, user)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return None, f"entailment call failed: {exc!r}"
     result = parse_entailment_response(response)
     if result is None:

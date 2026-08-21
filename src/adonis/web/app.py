@@ -284,7 +284,7 @@ def _run_job_thread(job_id: str, params: dict[str, object]) -> None:
                 conn_j.close()
         finally:
             conn2.close()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         conn_e = get_conn()
         try:
             update_job(conn_e, job_id, status="error", finished_at=datetime.now(UTC).isoformat(), error=f"{type(exc).__name__}: {exc}")
@@ -849,7 +849,7 @@ def create_app() -> FastAPI:
                 from adonis.extract.entities import extract_mentions
                 _HAS_NER = True
                 _HAS_CLAIMS = True
-            except Exception:  # noqa: BLE001 — optional heavy deps may be missing in test env
+            except Exception:
                 try:
                     from adonis.extract.claims import extract_document_claims, prompt_version
                     _HAS_CLAIMS = True
@@ -1353,7 +1353,7 @@ def create_app() -> FastAPI:
                     error = "; ".join(res.errors[:3])
             else:
                 raise ValueError(f"unknown kind {kind}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
             stats = {"error": error}
 
@@ -1389,7 +1389,7 @@ def create_app() -> FastAPI:
 
         try:
             tok = exchange_code(code)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return HTMLResponse(f"<h3>Token exchange failed</h3><pre>{exc}</pre><p><a href='/'>back</a></p>", status_code=502)
         # Persist refresh token to .env and create a drive connection if missing
         refresh = tok.get("refresh_token", "")

@@ -1,4 +1,4 @@
-"""Candidate pair generation (PLAN.md M3).
+"""Candidate pair generation.
 
 Strategy per claim: top-K embedding neighbors (hybrid when the pair also
 shares an entity, else 'embedding'), plus every cross-document pair sharing

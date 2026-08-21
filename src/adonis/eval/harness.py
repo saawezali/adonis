@@ -1,4 +1,4 @@
-"""Eval harness over the store (PLAN.md M5).
+"""Eval harness over the store.
 
 Loads every eval_labels row, joins it to the judge output for the same
 candidate pair (either ordering), pulls verification results, and produces

@@ -1,6 +1,6 @@
 """Document chunking for claim extraction.
 
-Per PLAN.md M2: chunk documents into sentence-aligned pieces small enough
+Per design spec M2: chunk documents into sentence-aligned pieces small enough
 for one extraction call, keeping absolute character offsets into the
 normalized raw_text. Sentences come from a rule-based spaCy sentencizer
 (no model download required); over-long sentences are split at word/space

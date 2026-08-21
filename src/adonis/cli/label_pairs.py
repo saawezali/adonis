@@ -1,4 +1,4 @@
-"""Interactive claim-pair labeling CLI (PLAN.md M2..M5).
+"""Interactive claim-pair labeling CLI.
 
 Three label pools, chosen with --pool:
   entity    cross-document pairs sharing a canonical entity (contradiction
@@ -8,7 +8,7 @@ Three label pools, chosen with --pool:
   unrelated cross-document pairs with no shared entity (potential
             true_negative_unrelated).
 
-Labels go into eval_labels, matching the taxonomy in PLAN.md section 4.
+Labels go into eval_labels, matching the taxonomy in design spec section 4.
 Run: python -m adonis.cli.label_pairs [--pool near_dup|unrelated|entity]
 """
 

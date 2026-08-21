@@ -14,7 +14,7 @@ python -m adonis.cli.doctor
 
 1. `git checkout -b feat/your-feature`
 2. Write tests first (`tests/unit/` or `tests/fakes.py` for LLM/NER/embedder fakes)
-3. Keep `PLAN.md` as design record — update it if you change architecture, taxonomy, or schema; `README.md` is the user guide.
+3. Keep the design record up to date if you change architecture, taxonomy, or schema; `README.md` is the user guide.
 4. `make lint` (ruff) and `make typecheck` (mypy strict, 3.11) must pass.
 5. Open PR with `make demo` screenshot/GIF if UI changed.
 

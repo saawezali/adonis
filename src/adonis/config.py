@@ -1,6 +1,6 @@
 """Typed application configuration, loaded from environment / .env.
 
-Per PLAN.md section 2: provider-independent. Concrete adapter is selected per
+provider-independent. Concrete adapter is selected per
 tier: a provider-specific override (ADONIS_EXTRACTOR_PROVIDER /
 ADONIS_JUDGE_PROVIDER) wins, otherwise ADONIS_LLM_PROVIDER is used. Tiers are
 configured independently (extractor: cheap/fast; judge: larger/smarter).
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     top_k: int = 20
     triviality_cutoff: float = 0.5  # raised from 0.3 after audit A4
     span_fuzzy_threshold: int = 90
-    # Canonical weight (PLAN §8). Legacy aliases below are deprecated but kept for compat.
+    # Canonical weight for hybrid scoring. Legacy aliases below are deprecated but kept for compat.
     similarity_weight: float = 0.7  # weight for embedding cosine in combined score
     candidate_entity_weight: float = 0.3  # deprecated alias: mirrors 1 - similarity_weight
     judge_per_claim: int = 3

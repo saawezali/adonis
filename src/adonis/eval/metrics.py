@@ -1,4 +1,4 @@
-"""Eval metrics over labeled pairs (PLAN.md M5).
+"""Eval metrics over labeled pairs.
 
 Pure functions: per-category precision/recall/F1 from (truth, prediction)
 tuples, micro/macro averages, and citation-faithfulness. Predictions are

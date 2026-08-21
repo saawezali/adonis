@@ -1,4 +1,4 @@
-"""Claim embedding via sentence-transformers (PLAN.md M3).
+"""Claim embedding via sentence-transformers.
 
 The model loads lazily (first use downloads it unless cached). Callers may
 inject any object with `encode(texts, normalize_embeddings=...)` for offline

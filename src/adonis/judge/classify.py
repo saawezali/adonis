@@ -1,4 +1,4 @@
-"""LLM-as-judge (prompt judge_v1, PLAN.md M3).
+"""LLM-as-judge (prompt judge_v1, design spec M3).
 
 Takes one candidate pair, applies the §1.4 decision rules, and returns a
 label + raw confidence + reasoning + cited spans. Spans are returned
@@ -125,7 +125,7 @@ def judge_pair(
     system, user = build_judge_prompt(claim_a, claim_b)
     try:
         response = client.complete_json(system, user)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return None, f"judge call failed: {exc!r}"
     result = parse_judge_response(response, claim_a.text, claim_b.text)
     if result is None:
